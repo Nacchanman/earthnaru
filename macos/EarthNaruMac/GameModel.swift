@@ -12,13 +12,17 @@ struct LiftObject: Identifiable, Equatable {
 @MainActor
 final class GameModel: ObservableObject {
     @Published private(set) var totalKeys: Int
+    @Published private(set) var todayKeys: Int
     @Published private(set) var level: Int
     @Published private(set) var runFrame = 0
     @Published var isCelebrating = false
     @Published var isPaused = false
 
     private let totalKeysStorageKey = "earthnaru.mac.totalKeys"
+    private let todayKeysStorageKey = "earthnaru.mac.todayKeys"
+    private let activityDateStorageKey = "earthnaru.mac.activityDate"
     private var celebrationTask: Task<Void, Never>?
+    private var activityDate: String
 
     let levelTable: [(requiredKeys: Int, object: LiftObject)] = [
         (0, LiftObject(level: 1, name: "Feather", emoji: "🪶")),
@@ -34,9 +38,14 @@ final class GameModel: ObservableObject {
     ]
 
     init() {
+        let today = Self.dayStamp()
         let saved = UserDefaults.standard.integer(forKey: totalKeysStorageKey)
+        let savedDate = UserDefaults.standard.string(forKey: activityDateStorageKey)
         self.totalKeys = saved
+        self.todayKeys = savedDate == today ? UserDefaults.standard.integer(forKey: todayKeysStorageKey) : 0
         self.level = Self.level(for: saved)
+        self.activityDate = today
+        UserDefaults.standard.set(today, forKey: activityDateStorageKey)
     }
 
     var currentObject: LiftObject {
@@ -48,23 +57,63 @@ final class GameModel: ObservableObject {
         return levelTable[level].requiredKeys
     }
 
+    var currentRequiredKeys: Int {
+        levelTable[level - 1].requiredKeys
+    }
+
+    var keysToNextLevel: Int {
+        guard let nextRequiredKeys else { return 0 }
+        return max(0, nextRequiredKeys - totalKeys)
+    }
+
+    var todayGoal: Int {
+        600
+    }
+
+    var todayProgress: Double {
+        min(1, max(0, Double(todayKeys) / Double(todayGoal)))
+    }
+
+    var activityPace: ActivityPace {
+        switch todayKeys {
+        case 0:
+            return .idle
+        case 1..<150:
+            return .warmingUp
+        case 150..<600:
+            return .training
+        default:
+            return .flow
+        }
+    }
+
     var progressToNextLevel: Double {
         guard let nextRequiredKeys else { return 1 }
-        let currentRequired = levelTable[level - 1].requiredKeys
-        let span = max(1, nextRequiredKeys - currentRequired)
-        return min(1, max(0, Double(totalKeys - currentRequired) / Double(span)))
+        let span = max(1, nextRequiredKeys - currentRequiredKeys)
+        return min(1, max(0, Double(totalKeys - currentRequiredKeys) / Double(span)))
     }
 
     func addKeypress() {
         guard !isPaused else { return }
+        rollOverDayIfNeeded()
         runFrame = (runFrame + 1) % 4
+        todayKeys += 1
+        UserDefaults.standard.set(todayKeys, forKey: todayKeysStorageKey)
         setTotalKeys(totalKeys + 1)
     }
 
     func reset() {
         runFrame = 0
+        resetToday()
         setTotalKeys(0)
         isCelebrating = false
+    }
+
+    func resetToday() {
+        activityDate = Self.dayStamp()
+        todayKeys = 0
+        UserDefaults.standard.set(activityDate, forKey: activityDateStorageKey)
+        UserDefaults.standard.set(todayKeys, forKey: todayKeysStorageKey)
     }
 
     private func setTotalKeys(_ newValue: Int) {
@@ -90,5 +139,57 @@ final class GameModel: ObservableObject {
     private static func level(for keys: Int) -> Int {
         let thresholds = [0, 50, 150, 350, 700, 1_200, 2_000, 3_500, 5_500, 8_000]
         return (thresholds.lastIndex(where: { keys >= $0 }) ?? 0) + 1
+    }
+
+    private func rollOverDayIfNeeded() {
+        let today = Self.dayStamp()
+        guard activityDate != today else { return }
+
+        activityDate = today
+        todayKeys = 0
+        UserDefaults.standard.set(today, forKey: activityDateStorageKey)
+        UserDefaults.standard.set(todayKeys, forKey: todayKeysStorageKey)
+    }
+
+    private static func dayStamp(date: Date = Date()) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = .current
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
+enum ActivityPace {
+    case idle
+    case warmingUp
+    case training
+    case flow
+
+    var title: String {
+        switch self {
+        case .idle: return "Ready"
+        case .warmingUp: return "Warming up"
+        case .training: return "Training"
+        case .flow: return "Flow state"
+        }
+    }
+
+    var caption: String {
+        switch self {
+        case .idle: return "Start typing to wake the planet."
+        case .warmingUp: return "Momentum is building."
+        case .training: return "Steady progress today."
+        case .flow: return "Daily goal cleared."
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .idle: return Color(red: 0.52, green: 0.56, blue: 0.62)
+        case .warmingUp: return Color(red: 0.91, green: 0.58, blue: 0.24)
+        case .training: return Color(red: 0.17, green: 0.55, blue: 0.85)
+        case .flow: return Color(red: 0.21, green: 0.64, blue: 0.43)
+        }
     }
 }
