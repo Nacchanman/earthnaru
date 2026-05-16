@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let keyboardMonitor = KeyboardMonitor()
     private var companionWindow: CompanionWindowController?
     private var statusItem: NSStatusItem?
+    private var permissionRetryTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -19,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        permissionRetryTimer?.invalidate()
         keyboardMonitor.stop()
     }
 
@@ -29,8 +31,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
-        if KeyboardMonitor.isAccessibilityTrusted(prompt: true) {
-            keyboardMonitor.start()
+        if keyboardMonitor.start() {
+            permissionRetryTimer?.invalidate()
+            permissionRetryTimer = nil
+        } else {
+            schedulePermissionRetry()
+        }
+
+        rebuildMenu()
+    }
+
+    private func schedulePermissionRetry() {
+        permissionRetryTimer?.invalidate()
+        permissionRetryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.startKeyboardMonitorIfAllowed()
+            }
         }
     }
 
@@ -44,7 +60,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func rebuildMenu() {
         let menu = NSMenu()
 
-        let statusTitle = keyboardMonitor.isRunning ? "Key counter: On" : "Key counter: Needs permission"
+        let statusTitle: String
+        if keyboardMonitor.isRunning {
+            statusTitle = "Key counter: On"
+        } else {
+            statusTitle = keyboardMonitor.lastError ?? "Key counter: Needs permission"
+        }
+
         let status = NSMenuItem(title: statusTitle, action: nil, keyEquivalent: "")
         status.isEnabled = false
         menu.addItem(status)
@@ -54,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: game.isPaused ? "Resume" : "Pause", action: #selector(togglePause), keyEquivalent: "p"))
         menu.addItem(NSMenuItem(title: companionWindow?.isVisible == true ? "Hide Mascot" : "Show Mascot", action: #selector(toggleWindow), keyEquivalent: "m"))
         menu.addItem(NSMenuItem(title: "Reset Progress", action: #selector(resetProgress), keyEquivalent: "r"))
+        menu.addItem(NSMenuItem(title: "Restart Key Counter", action: #selector(restartKeyCounter), keyEquivalent: "k"))
 
         menu.addItem(NSMenuItem.separator())
 
@@ -90,6 +113,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func resetProgress() {
         game.reset()
+    }
+
+    @objc private func restartKeyCounter() {
+        keyboardMonitor.stop()
+        startKeyboardMonitorIfAllowed()
     }
 
     @objc private func moveWindow(_ sender: NSMenuItem) {
