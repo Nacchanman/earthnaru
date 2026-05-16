@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let game = GameModel()
     private let keyboardMonitor = KeyboardMonitor()
@@ -23,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startKeyboardMonitorIfAllowed() {
         keyboardMonitor.onKeyDown = { [weak self] in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.game.addKeypress()
             }
         }
