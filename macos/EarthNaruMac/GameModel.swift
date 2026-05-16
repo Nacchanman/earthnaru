@@ -13,6 +13,7 @@ struct LiftObject: Identifiable, Equatable {
 final class GameModel: ObservableObject {
     @Published private(set) var totalKeys: Int
     @Published private(set) var level: Int
+    @Published private(set) var runFrame = 0
     @Published var isCelebrating = false
     @Published var isPaused = false
 
@@ -56,10 +57,12 @@ final class GameModel: ObservableObject {
 
     func addKeypress() {
         guard !isPaused else { return }
+        runFrame = (runFrame + 1) % 4
         setTotalKeys(totalKeys + 1)
     }
 
     func reset() {
+        runFrame = 0
         setTotalKeys(0)
         isCelebrating = false
     }
