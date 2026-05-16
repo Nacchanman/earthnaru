@@ -277,6 +277,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = EarthNaruMac;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "EarthNaru counts physical keyboard presses to animate your mascot. Typed characters are never stored.";
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.earthnaru.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -298,6 +299,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = EarthNaruMac;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSInputMonitoringUsageDescription = "EarthNaru counts physical keyboard presses to animate your mascot. Typed characters are never stored.";
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.earthnaru.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
