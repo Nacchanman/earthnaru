@@ -7,46 +7,39 @@ struct MascotView: View {
     var body: some View {
         TimelineView(.animation) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
-            let bounce = sin(t * 6) * 4
-            let armLift: CGFloat = isCelebrating ? -46 : CGFloat(bounce)
+            let pump = sin(t * 7) * 4
+            let rightHandLift: CGFloat = isCelebrating ? -54 : CGFloat(pump)
+            let leftHandLift: CGFloat = CGFloat(-pump / 2)
 
             ZStack {
                 trophyObject
-                    .offset(x: 66, y: 56)
-                    .opacity(isCelebrating ? 0.18 : 1)
+                    .offset(x: 66, y: 58)
+                    .opacity(isCelebrating ? 0.15 : 1)
 
-                VStack(spacing: 4) {
+                VStack(spacing: 0) {
                     if isCelebrating {
                         Text(object.emoji)
                             .font(.system(size: 34))
-                            .offset(y: -8)
+                            .offset(x: 45, y: 8)
                     }
 
                     ZStack {
-                        earthBody
+                        leftArm(lift: leftHandLift)
+                            .offset(x: -73, y: 39)
 
-                        Rectangle()
-                            .fill(Color(red: 0.04, green: 0.16, blue: 0.42))
-                            .frame(width: 8, height: 28)
-                            .offset(x: -22, y: -2)
+                        rightArm(lift: rightHandLift)
+                            .offset(x: 75, y: 25)
 
-                        Rectangle()
-                            .fill(Color(red: 0.04, green: 0.16, blue: 0.42))
-                            .frame(width: 8, height: 28)
-                            .offset(x: 22, y: -2)
+                        pixelEarth
+                            .offset(y: CGFloat(pump / 4))
 
-                        arm(side: -1, lift: CGFloat(bounce))
-                            .offset(x: -58, y: 22)
+                        eyes
+                            .offset(y: CGFloat(pump / 4))
 
-                        arm(side: 1, lift: armLift)
-                            .offset(x: 58, y: 12)
-
-                        leg(side: -1)
-                            .offset(x: -24, y: 72 + CGFloat(max(0, bounce / 2)))
-                        leg(side: 1)
-                            .offset(x: 24, y: 72 + CGFloat(max(0, -bounce / 2)))
+                        legs(pump: CGFloat(pump))
+                            .offset(y: 96)
                     }
-                    .offset(y: CGFloat(bounce / 3))
+                    .frame(width: 180, height: 172)
                 }
             }
             .frame(width: 180, height: 215)
@@ -67,65 +60,148 @@ struct MascotView: View {
         .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
     }
 
-    private var earthBody: some View {
-        ZStack {
-            Circle()
-                .fill(Color(red: 0.25, green: 0.56, blue: 0.92))
-                .frame(width: 132, height: 132)
-                .overlay(
-                    Circle()
-                        .stroke(Color(red: 0.04, green: 0.16, blue: 0.42), lineWidth: 8)
-                )
+    private var pixelEarth: some View {
+        PixelMap(
+            rows: [
+                ".......DDDDDDD.......",
+                ".....DDDBBBBBBBDD....",
+                "....DBBGGGGGBBBBBD...",
+                "...DBGGGGGGBBBBBBBD..",
+                "..DBGGGGGGBBBBBBBBBD.",
+                ".DBBGGGGGBBBBBBGGBBBD",
+                ".DBBBGGGBBBBBBGGGGBBD",
+                "DBBBBBBBBBBBBBGGGGGBD",
+                "DBBBBBBEBBBBBEBBGGBBD",
+                "DBBBBBBEBBBBBEBBBBBBD",
+                "DBBBBBBBBBBBBBBGGGGBD",
+                ".DBBBBBGGBBBBBGGGGGBD",
+                ".DBBBBGGGGBBBBGGGGBD.",
+                "..DBBGGGGGGGGBBBBGD..",
+                "...DBGGGGGGGGBBBBD...",
+                "....DDBGGGGGBBBDD....",
+                ".....DDDBBBBBDD......",
+                ".......DDDDDDD......."
+            ],
+            pixelSize: 7,
+            palette: MascotPalette.self
+        )
+        .shadow(color: .black.opacity(0.16), radius: 0, x: 4, y: 4)
+    }
 
-            PixelLand(points: [
-                CGRect(x: -46, y: -50, width: 38, height: 18),
-                CGRect(x: -56, y: -30, width: 34, height: 24),
-                CGRect(x: -38, y: 34, width: 60, height: 26),
-                CGRect(x: 20, y: -42, width: 36, height: 38),
-                CGRect(x: 32, y: 16, width: 44, height: 38),
-                CGRect(x: 52, y: 48, width: 20, height: 20),
-                CGRect(x: -42, y: 6, width: 16, height: 9)
-            ])
+    private var eyes: some View {
+        HStack(spacing: 31) {
+            PixelBlock(width: 2, height: 7, pixelSize: 6, color: MascotPalette.dark)
+            PixelBlock(width: 2, height: 7, pixelSize: 6, color: MascotPalette.dark)
+        }
+        .offset(y: -7)
+    }
+
+    private func leftArm(lift: CGFloat) -> some View {
+        ZStack {
+            PixelBlock(width: 2, height: 7, pixelSize: 7, color: MascotPalette.dark)
+                .rotationEffect(.degrees(32))
+                .offset(x: 14, y: lift / 3)
+            PixelBlock(width: 4, height: 3, pixelSize: 7, color: MascotPalette.dark)
+                .offset(x: -8, y: 32 + lift)
+            PixelBlock(width: 3, height: 3, pixelSize: 7, color: MascotPalette.dark)
+                .offset(x: -22, y: 47 + lift)
         }
     }
 
-    private func arm(side: CGFloat, lift: CGFloat) -> some View {
+    private func rightArm(lift: CGFloat) -> some View {
         ZStack {
-            Rectangle()
-                .fill(Color(red: 0.04, green: 0.16, blue: 0.42))
-                .frame(width: 10, height: 46)
-                .rotationEffect(.degrees(side == 1 ? -58 : 30))
-                .offset(x: side * 8, y: lift / 2)
-            Circle()
-                .fill(Color(red: 0.04, green: 0.16, blue: 0.42))
-                .frame(width: 20, height: 20)
-                .offset(x: side * 27, y: lift)
+            PixelBlock(width: 2, height: 8, pixelSize: 7, color: MascotPalette.dark)
+                .rotationEffect(.degrees(-58))
+                .offset(x: -8, y: lift / 2)
+            PixelBlock(width: 4, height: 3, pixelSize: 7, color: MascotPalette.dark)
+                .offset(x: 24, y: -8 + lift)
+            PixelBlock(width: 3, height: 3, pixelSize: 7, color: MascotPalette.dark)
+                .offset(x: 43, y: -27 + lift)
         }
     }
 
-    private func leg(side: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            Rectangle()
-                .fill(Color(red: 0.04, green: 0.16, blue: 0.42))
-                .frame(width: 11, height: 34)
-            Rectangle()
-                .fill(Color(red: 0.04, green: 0.16, blue: 0.42))
-                .frame(width: 32, height: 11)
-                .offset(x: side * -7)
+    private func legs(pump: CGFloat) -> some View {
+        HStack(spacing: 26) {
+            VStack(spacing: 0) {
+                PixelBlock(width: 2, height: 5, pixelSize: 7, color: MascotPalette.dark)
+                PixelBlock(width: 6, height: 2, pixelSize: 7, color: MascotPalette.dark)
+                    .offset(x: -14)
+            }
+            .offset(y: max(0, pump / 2))
+
+            VStack(spacing: 0) {
+                PixelBlock(width: 2, height: 5, pixelSize: 7, color: MascotPalette.dark)
+                PixelBlock(width: 6, height: 2, pixelSize: 7, color: MascotPalette.dark)
+                    .offset(x: 14)
+            }
+            .offset(y: max(0, -pump / 2))
         }
     }
 }
 
-private struct PixelLand: View {
-    let points: [CGRect]
+private enum MascotPalette {
+    static let dark = Color(red: 0.03, green: 0.14, blue: 0.40)
+    static let ocean = Color(red: 0.24, green: 0.55, blue: 0.91)
+    static let oceanLight = Color(red: 0.34, green: 0.65, blue: 0.98)
+    static let land = Color(red: 0.56, green: 0.74, blue: 0.39)
+
+    static func color(for symbol: Character) -> Color? {
+        switch symbol {
+        case "D": dark
+        case "B": ocean
+        case "b": oceanLight
+        case "G": land
+        case "E": dark
+        default: nil
+        }
+    }
+}
+
+private struct PixelMap<Palette>: View {
+    let rows: [String]
+    let pixelSize: CGFloat
+    let palette: Palette.Type
+
+    private var maxColumns: Int {
+        rows.map { $0.count }.max() ?? 0
+    }
 
     var body: some View {
-        ZStack {
-            ForEach(Array(points.enumerated()), id: \.offset) { _, rect in
-                Rectangle()
-                    .fill(Color(red: 0.57, green: 0.76, blue: 0.41))
-                    .frame(width: rect.width, height: rect.height)
-                    .offset(x: rect.minX, y: rect.minY)
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
+                ForEach(Array(Array(row).enumerated()), id: \.offset) { columnIndex, symbol in
+                    if let color = MascotPalette.color(for: symbol) {
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: pixelSize, height: pixelSize)
+                            .offset(
+                                x: CGFloat(columnIndex) * pixelSize,
+                                y: CGFloat(rowIndex) * pixelSize
+                            )
+                    }
+                }
+            }
+        }
+        .frame(width: CGFloat(maxColumns) * pixelSize, height: CGFloat(rows.count) * pixelSize)
+    }
+}
+
+private struct PixelBlock: View {
+    let width: Int
+    let height: Int
+    let pixelSize: CGFloat
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<height, id: \.self) { _ in
+                HStack(spacing: 0) {
+                    ForEach(0..<width, id: \.self) { _ in
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: pixelSize, height: pixelSize)
+                    }
+                }
             }
         }
     }
