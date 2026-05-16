@@ -7,19 +7,33 @@ struct MascotView: View {
 
     private let pixel: CGFloat = 5
     private let canvasSize = CGSize(width: 154, height: 178)
+    private let bodyCenter = CGPoint(x: 77, y: 88)
 
     var body: some View {
-        let frame = isCelebrating ? 4 : runFrame % 4
+        let frame = runFrame % 4
+        let bob: CGFloat = isCelebrating ? -4 : [0, -3, 0, -2][frame]
 
         ZStack {
-            PixelMap(rows: spriteRows(frame: frame), pixelSize: pixel)
-                .frame(width: canvasSize.width, height: canvasSize.height)
+            legs(frame: frame)
+                .position(x: bodyCenter.x, y: bodyCenter.y + 60 + bob)
+
+            leftArm(frame: frame)
+                .position(x: bodyCenter.x - 54, y: bodyCenter.y + 4 + bob)
+
+            rightArm(frame: frame, isCelebrating: isCelebrating)
+                .position(x: bodyCenter.x + 54, y: bodyCenter.y + (isCelebrating ? -42 : 4) + bob)
+
+            PixelGrid(rows: earthRows, pixelSize: pixel)
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
+                .position(x: bodyCenter.x, y: bodyCenter.y + bob)
+
+            eyes
+                .position(x: bodyCenter.x + 13, y: bodyCenter.y - 2 + bob)
 
             if isCelebrating {
                 Text(object.emoji)
                     .font(.system(size: 28))
-                    .offset(x: 46, y: -73)
+                    .position(x: bodyCenter.x + 58, y: bodyCenter.y - 84)
                     .transition(.scale)
             }
         }
@@ -29,154 +43,142 @@ struct MascotView: View {
         .animation(.spring(response: 0.34, dampingFraction: 0.68), value: isCelebrating)
     }
 
-    private func spriteRows(frame: Int) -> [String] {
-        switch frame {
-        case 1:
-            return [
-                ".............................",
-                "...........DDDDDDD...........",
-                ".........DDDBBBBBBBDD........",
-                "........DBBGGGGGBBBBBD.......",
-                ".......DBGGGGGGBBBBBBBD......",
-                "......DBGGGGGGBBBBBBBBBD.....",
-                ".....DBBGGGGGBBBBBBGGBBBD....",
-                "....DDBBBGGGBBBBBBGGGGBBDD...",
-                "...DDDBBBBBBBBBBBBBGGGGGBD...",
-                "..DDD.DBBBBBEBBBBBEBBGGBBD...",
-                ".DDD..DBBBBBEBBBBBEBBBBBBD...",
-                "DDD...DBBBBBBBBBBBBBBGGGGBD..",
-                ".DD....DBBBBBGGBBBBBGGGGGBD..",
-                "..DD...DBBBBGGGGBBBBGGGGBD..",
-                "...DD...DBBGGGGGGGGBBBBGD...",
-                "....DD...DBGGGGGGGGBBBBD....",
-                ".........DDBGGGGGBBBDD......",
-                "..........DDDBBBBBDD........",
-                "............DDDDDDD.........",
-                "...........DD....DD.........",
-                "..........DD......DD........",
-                ".........DD........DD.......",
-                ".........DDDD.....DDDD......"
+    private var earthRows: [String] {
+        [
+            ".......DDDDDDD.......",
+            ".....DDDBBBBBBBDD....",
+            "....DBBGGGGGBBBBBD...",
+            "...DBGGGGGGBBBBBBBD..",
+            "..DBGGGGGGBBBBBBBBBD.",
+            ".DBBGGGGGBBBBBBGGBBBD",
+            ".DBBBGGGBBBBBBGGGGBBD",
+            "DBBBBBBBBBBBBBGGGGGBD",
+            "DBBBBBBEBBBBBEBBGGBBD",
+            "DBBBBBBEBBBBBEBBBBBBD",
+            "DBBBBBBBBBBBBBBGGGGBD",
+            ".DBBBBBGGBBBBBGGGGGBD",
+            ".DBBBBGGGGBBBBGGGGBD.",
+            "..DBBGGGGGGGGBBBBGD..",
+            "...DBGGGGGGGGBBBBD...",
+            "....DDBGGGGGBBBDD....",
+            ".....DDDBBBBBDD......",
+            ".......DDDDDDD......."
+        ]
+    }
+
+    private var eyes: some View {
+        HStack(spacing: 22) {
+            PixelBlock(width: 2, height: 5, pixelSize: 4, color: MascotPalette.dark)
+            PixelBlock(width: 2, height: 5, pixelSize: 4, color: MascotPalette.dark)
+        }
+    }
+
+    private func leftArm(frame: Int) -> some View {
+        let rows: [String]
+        if frame == 0 || frame == 1 {
+            rows = [
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DDD.."
             ]
-        case 2:
-            return [
-                ".............................",
-                "...........DDDDDDD...........",
-                ".........DDDBBBBBBBDD........",
-                "........DBBGGGGGBBBBBD.......",
-                ".......DBGGGGGGBBBBBBBD......",
-                "....DDDBGGGGGGBBBBBBBBBD.....",
-                "...DDDBBGGGGGBBBBBBGGBBBD....",
-                "..DDDDBBBGGGBBBBBBGGGGBBDD...",
-                ".DDD.DBBBBBBBBBBBBBGGGGGBD...",
-                "DDD..DBBBBBBEBBBBBEBBGGBBD...",
-                ".DD..DBBBBBBEBBBBBEBBBBBBD...",
-                "..DD.DBBBBBBBBBBBBBBGGGGBD...",
-                "...DD.DBBBBBGGBBBBBGGGGGBD...",
-                "....DDDBBBGGGGBBBBGGGGBD....",
-                "......DDBBGGGGGGGGBBBBGD....",
-                ".......DBGGGGGGGGBBBBD......",
-                "........DDBGGGGGBBBDD.......",
-                ".........DDDBBBBBDD.........",
-                "...........DDDDDDD..........",
-                "..........DD......DD........",
-                "..........DD......DD........",
-                ".........DDDD....DDDD.......",
-                ".........DDD......DDD......."
-            ]
-        case 3:
-            return [
-                ".............................",
-                "...........DDDDDDD...........",
-                ".........DDDBBBBBBBDD........",
-                "........DBBGGGGGBBBBBD.......",
-                ".......DBGGGGGGBBBBBBBD......",
-                "....DDDBGGGGGGBBBBBBBBBD.....",
-                "...DDDBBGGGGGBBBBBBGGBBBD....",
-                "..DDDDBBBGGGBBBBBBGGGGBBDD...",
-                ".DDD.DBBBBBBBBBBBBBGGGGGBD...",
-                "..DDDDBBBBBBEBBBBBEBBGGBBD...",
-                "...DDDBBBBBBEBBBBBEBBBBBBD...",
-                "....DDBBBBBBBBBBBBBBGGGGBD...",
-                ".....DDBBBBBGGBBBBBGGGGGBD...",
-                "......DBBBGGGGBBBBGGGGBD....",
-                ".......DBBGGGGGGGGBBBBGD....",
-                "........DBGGGGGGGGBBBBD.....",
-                ".........DDBGGGGGBBBDD......",
-                "..........DDDBBBBBDD........",
-                "............DDDDDDD.........",
-                "............DD..DD..........",
-                "...........DD....DD.........",
-                "..........DDDD..DDDD........",
-                "..........DDD....DDD........"
-            ]
-        case 4:
-            return [
-                "......................DDD....",
-                ".....................DDD.....",
-                "....................DDD......",
-                "...........DDDDDDD.DD........",
-                ".........DDDBBBBBBBDD........",
-                "........DBBGGGGGBBBBBD.......",
-                ".....DDDBGGGGGGBBBBBBBD......",
-                "....DDDBGGGGGGBBBBBBBBBD.....",
-                "...DDDBBGGGGGBBBBBBGGBBBD....",
-                "..DDDDBBBGGGBBBBBBGGGGBBDD...",
-                ".DDD.DBBBBBBBBBBBBBGGGGGBD...",
-                "..DDDDBBBBBBEBBBBBEBBGGBBD...",
-                "...DDDBBBBBBEBBBBBEBBBBBBD...",
-                "....DDBBBBBBBBBBBBBBGGGGBD...",
-                ".....DDBBBBBGGBBBBBGGGGGBD...",
-                "......DBBBGGGGBBBBGGGGBD....",
-                ".......DBBGGGGGGGGBBBBGD....",
-                "........DBGGGGGGGGBBBBD.....",
-                ".........DDBGGGGGBBBDD......",
-                "..........DDDBBBBBDD........",
-                "............DDDDDDD.........",
-                "............DD..DD..........",
-                "...........DD....DD.........",
-                "..........DDDD..DDDD........"
-            ]
-        default:
-            return [
-                ".............................",
-                "...........DDDDDDD...........",
-                ".........DDDBBBBBBBDD........",
-                "........DBBGGGGGBBBBBD.......",
-                ".......DBGGGGGGBBBBBBBD......",
-                "....DDDBGGGGGGBBBBBBBBBD.....",
-                "...DDDBBGGGGGBBBBBBGGBBBD....",
-                "..DDDDBBBGGGBBBBBBGGGGBBDD...",
-                ".DDD.DBBBBBBBBBBBBBGGGGGBD...",
-                "..DDDDBBBBBBEBBBBBEBBGGBBD...",
-                "...DDDBBBBBBEBBBBBEBBBBBBD...",
-                "....DDBBBBBBBBBBBBBBGGGGBD...",
-                ".....DDBBBBBGGBBBBBGGGGGBD...",
-                "......DBBBGGGGBBBBGGGGBD....",
-                ".......DBBGGGGGGGGBBBBGD....",
-                "........DBGGGGGGGGBBBBD.....",
-                ".........DDBGGGGGBBBDD......",
-                "..........DDDBBBBBDD........",
-                "............DDDDDDD.........",
-                "...........DD....DD.........",
-                "...........DD....DD.........",
-                "..........DDDD..DDDD........",
-                "..........DDD....DDD........"
+        } else {
+            rows = [
+                "DD....",
+                ".DD...",
+                "..DD..",
+                "...DD.",
+                "....DD",
+                "....DD",
+                "..DDD."
             ]
         }
+        return PixelGrid(rows: rows, pixelSize: pixel)
+    }
+
+    private func rightArm(frame: Int, isCelebrating: Bool) -> some View {
+        if isCelebrating {
+            return PixelGrid(rows: [
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DDD.."
+            ], pixelSize: pixel)
+        }
+
+        let rows: [String]
+        if frame == 0 || frame == 1 {
+            rows = [
+                "DD....",
+                ".DD...",
+                "..DD..",
+                "...DD.",
+                "....DD",
+                "....DD",
+                "..DDD."
+            ]
+        } else {
+            rows = [
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DDD.."
+            ]
+        }
+        return PixelGrid(rows: rows, pixelSize: pixel)
+    }
+
+    private func legs(frame: Int) -> some View {
+        let leftForward = frame == 0 || frame == 1
+        return HStack(spacing: 18) {
+            leg(forward: leftForward)
+            leg(forward: !leftForward)
+                .scaleEffect(x: -1, y: 1)
+        }
+    }
+
+    private func leg(forward: Bool) -> some View {
+        PixelGrid(
+            rows: forward
+            ? [
+                "..DD.",
+                "..DD.",
+                ".DD..",
+                ".DD..",
+                "DDDD.",
+                "DDDD."
+            ]
+            : [
+                ".DD..",
+                ".DD..",
+                "..DD.",
+                "..DD.",
+                ".DDDD",
+                ".DDDD"
+            ],
+            pixelSize: pixel
+        )
     }
 }
 
 private enum MascotPalette {
     static let dark = Color(red: 0.03, green: 0.14, blue: 0.40)
     static let ocean = Color(red: 0.24, green: 0.55, blue: 0.91)
-    static let oceanLight = Color(red: 0.34, green: 0.65, blue: 0.98)
     static let land = Color(red: 0.56, green: 0.74, blue: 0.39)
 
     static func color(for symbol: Character) -> Color? {
         switch symbol {
         case "D": dark
         case "B": ocean
-        case "b": oceanLight
         case "G": land
         case "E": dark
         default: nil
@@ -184,65 +186,72 @@ private enum MascotPalette {
     }
 }
 
-private struct PixelMap: View {
+private struct PixelGrid: View {
     let rows: [String]
     let pixelSize: CGFloat
 
-    private var trimmedPixels: [(row: Int, column: Int, color: Color)] {
-        let matrix = rows.map { Array($0) }
+    private var pixels: [(row: Int, column: Int, color: Color)] {
         var minRow = Int.max
         var minColumn = Int.max
-        var rawPixels: [(row: Int, column: Int, color: Color)] = []
+        var raw: [(row: Int, column: Int, color: Color)] = []
 
-        for (rowIndex, row) in matrix.enumerated() {
+        for (rowIndex, row) in rows.map({ Array($0) }).enumerated() {
             for (columnIndex, symbol) in row.enumerated() {
                 guard let color = MascotPalette.color(for: symbol) else { continue }
-                rawPixels.append((rowIndex, columnIndex, color))
+                raw.append((rowIndex, columnIndex, color))
                 minRow = min(minRow, rowIndex)
                 minColumn = min(minColumn, columnIndex)
             }
         }
 
         guard minRow != Int.max else { return [] }
-
-        return rawPixels.map { pixel in
-            (
-                row: pixel.row - minRow,
-                column: pixel.column - minColumn,
-                color: pixel.color
-            )
-        }
+        return raw.map { ($0.row - minRow, $0.column - minColumn, $0.color) }
     }
 
     private var dimensions: (columns: Int, rows: Int) {
-        let pixels = trimmedPixels
-        let columns = (pixels.map(\.column).max() ?? 0) + 1
-        let rows = (pixels.map(\.row).max() ?? 0) + 1
-        return (columns, rows)
+        let px = pixels
+        return ((px.map(\.column).max() ?? 0) + 1, (px.map(\.row).max() ?? 0) + 1)
     }
 
     var body: some View {
-        let pixels = trimmedPixels
+        let px = pixels
         let dimensions = dimensions
 
-        GeometryReader { geometry in
-            let spriteWidth = CGFloat(dimensions.columns) * pixelSize
-            let spriteHeight = CGFloat(dimensions.rows) * pixelSize
-            let originX = floor((geometry.size.width - spriteWidth) / 2)
-            let originY = floor((geometry.size.height - spriteHeight) / 2)
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(px.enumerated()), id: \.offset) { _, pixel in
+                Rectangle()
+                    .fill(pixel.color)
+                    .frame(width: pixelSize, height: pixelSize)
+                    .offset(
+                        x: CGFloat(pixel.column) * pixelSize,
+                        y: CGFloat(pixel.row) * pixelSize
+                    )
+            }
+        }
+        .frame(
+            width: CGFloat(dimensions.columns) * pixelSize,
+            height: CGFloat(dimensions.rows) * pixelSize
+        )
+    }
+}
 
-            ZStack(alignment: .topLeading) {
-                ForEach(Array(pixels.enumerated()), id: \.offset) { _, pixel in
-                    Rectangle()
-                        .fill(pixel.color)
-                        .frame(width: pixelSize, height: pixelSize)
-                        .offset(
-                            x: originX + CGFloat(pixel.column) * pixelSize,
-                            y: originY + CGFloat(pixel.row) * pixelSize
-                        )
+private struct PixelBlock: View {
+    let width: Int
+    let height: Int
+    let pixelSize: CGFloat
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<height, id: \.self) { _ in
+                HStack(spacing: 0) {
+                    ForEach(0..<width, id: \.self) { _ in
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: pixelSize, height: pixelSize)
+                    }
                 }
             }
-            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
         }
     }
 }
