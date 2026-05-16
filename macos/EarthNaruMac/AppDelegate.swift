@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let statusTitle: String
         if keyboardMonitor.isRunning {
-            statusTitle = "Key counter: On (\(keyboardMonitor.activeMonitorSummary))"
+            statusTitle = "Key counter: On (\(keyboardMonitor.diagnosticSummary))"
         } else {
             statusTitle = keyboardMonitor.lastError ?? "Key counter: Needs permission"
         }

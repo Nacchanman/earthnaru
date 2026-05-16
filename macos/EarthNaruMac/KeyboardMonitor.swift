@@ -12,9 +12,13 @@ final class KeyboardMonitor {
     private var localMonitor: Any?
     private var globalMonitor: Any?
     private var lastEventTime: TimeInterval = 0
+    private var totalEventsSeen = 0
 
     private(set) var isRunning = false
     private(set) var lastError: String?
+    private(set) var lastEventSource: String?
+    private(set) var accessibilityTrusted = false
+    private(set) var inputMonitoringTrusted = false
 
     var activeMonitorSummary: String {
         var active: [String] = []
@@ -23,6 +27,13 @@ final class KeyboardMonitor {
         if globalMonitor != nil { active.append("Global") }
         if localMonitor != nil { active.append("Local") }
         return active.isEmpty ? "none" : active.joined(separator: "+")
+    }
+
+    var diagnosticSummary: String {
+        let accessibility = accessibilityTrusted ? "AX ok" : "AX off"
+        let input = inputMonitoringTrusted ? "Input ok" : "Input off"
+        let last = lastEventSource.map { "last \($0) #\(totalEventsSeen)" } ?? "no keys yet"
+        return "\(activeMonitorSummary); \(accessibility); \(input); \(last)"
     }
 
     static func isAccessibilityTrusted(prompt: Bool) -> Bool {
@@ -53,21 +64,15 @@ final class KeyboardMonitor {
 
         installLocalMonitor()
 
-        let inputMonitoringTrusted = Self.isInputMonitoringTrusted(prompt: promptForPermission)
-        let accessibilityTrusted = Self.isAccessibilityTrusted(prompt: promptForPermission)
-        let canListenInBackground = inputMonitoringTrusted || accessibilityTrusted
+        inputMonitoringTrusted = Self.isInputMonitoringTrusted(prompt: promptForPermission)
+        accessibilityTrusted = Self.isAccessibilityTrusted(prompt: promptForPermission)
 
-        if inputMonitoringTrusted {
-            // HID receives physical key down values from other apps without reading
-            // or retaining the typed characters themselves. It is a useful fallback,
-            // but the Core Graphics tap below is the primary path for Input Monitoring.
-            installHIDMonitor()
-        }
-
-        if canListenInBackground {
-            installEventTap()
-            installGlobalMonitor()
-        }
+        // macOS privacy preflight can disagree with the actual running binary after
+        // Xcode rebuilds or app relocation. Try installing every background route and
+        // use preflight only for diagnostics and user-facing guidance.
+        installHIDMonitor()
+        installEventTap()
+        installGlobalMonitor()
 
         let hasBackgroundMonitor = hidManager != nil || eventTap != nil || globalMonitor != nil
         if hasBackgroundMonitor {
@@ -125,7 +130,7 @@ final class KeyboardMonitor {
         guard localMonitor == nil else { return }
 
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleKeyEvent(isRepeat: event.isARepeat)
+            self?.handleKeyEvent(source: "Local", isRepeat: event.isARepeat)
             return event
         }
     }
@@ -134,7 +139,7 @@ final class KeyboardMonitor {
         guard globalMonitor == nil else { return }
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleKeyEvent(isRepeat: event.isARepeat)
+            self?.handleKeyEvent(source: "Global", isRepeat: event.isARepeat)
         }
     }
 
@@ -160,7 +165,7 @@ final class KeyboardMonitor {
             let pressed = IOHIDValueGetIntegerValue(value) != 0
 
             guard page == UInt32(kHIDPage_KeyboardOrKeypad), usage > 0, pressed else { return }
-            monitor.handleKeyEvent(isRepeat: false)
+            monitor.handleKeyEvent(source: "HID", isRepeat: false)
         }, context)
 
         IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
@@ -221,19 +226,21 @@ final class KeyboardMonitor {
                     return Unmanaged.passUnretained(event)
                 }
 
-                monitor.handleKeyEvent(isRepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0)
+                monitor.handleKeyEvent(source: "Tap", isRepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0)
                 return Unmanaged.passUnretained(event)
             },
             userInfo: userInfo
         )
     }
 
-    private func handleKeyEvent(isRepeat: Bool) {
+    private func handleKeyEvent(source: String, isRepeat: Bool) {
         guard !isRepeat else { return }
 
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastEventTime > 0.015 else { return }
         lastEventTime = now
+        lastEventSource = source
+        totalEventsSeen += 1
 
         onKeyDown?()
     }

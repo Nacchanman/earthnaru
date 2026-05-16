@@ -8,37 +8,30 @@ struct MascotView: View {
     private let pixel: CGFloat = 5
     private let canvasSize = CGSize(width: 154, height: 178)
 
-    // The full running silhouette is intentionally centered inside the 154 × 178
-    // mascot area. Arms and feet slightly overlap the globe so every limb reads as
-    // attached while keeping the visual center close to the middle of the panel.
-    private let earthOrigin = CGPoint(x: 25, y: 31)
-    private let leftArmOrigin = CGPoint(x: 7, y: 65)
-    private let rightArmOrigin = CGPoint(x: 112, y: 65)
-    private let leftLegOrigin = CGPoint(x: 48, y: 117)
-    private let rightLegOrigin = CGPoint(x: 86, y: 117)
+    private let earthOrigin = CGPoint(x: 24, y: 36)
+    private let leftArmOrigin = CGPoint(x: 3, y: 86)
+    private let rightArmOrigin = CGPoint(x: 113, y: 70)
+    private let starOrigin = CGPoint(x: 117, y: 34)
+    private let leftLegOrigin = CGPoint(x: 55, y: 132)
+    private let rightLegOrigin = CGPoint(x: 91, y: 132)
 
     var body: some View {
         let frame = runFrame % 4
         let bob: CGFloat = isCelebrating ? -4 : [0, -3, 0, -2][frame]
 
         ZStack(alignment: .topLeading) {
-            pixelLayer(rows: legRows(forward: frame == 0 || frame == 1), origin: CGPoint(x: leftLegOrigin.x, y: leftLegOrigin.y + bob))
-            pixelLayer(rows: legRows(forward: !(frame == 0 || frame == 1)), origin: CGPoint(x: rightLegOrigin.x, y: rightLegOrigin.y + bob))
+            pixelLayer(rows: legRows(left: true), origin: CGPoint(x: leftLegOrigin.x, y: leftLegOrigin.y + bob))
+            pixelLayer(rows: legRows(left: false), origin: CGPoint(x: rightLegOrigin.x, y: rightLegOrigin.y + bob))
 
-            pixelLayer(rows: leftArmRows(frame: frame), origin: CGPoint(x: leftArmOrigin.x, y: leftArmOrigin.y + bob))
-            pixelLayer(rows: rightArmRows(frame: frame, isCelebrating: isCelebrating), origin: CGPoint(x: rightArmOrigin.x, y: rightArmOrigin.y + (isCelebrating ? -46 : 0) + bob))
+            pixelLayer(rows: leftArmRows, origin: CGPoint(x: leftArmOrigin.x, y: leftArmOrigin.y + bob))
+            pixelLayer(rows: rightArmRows, origin: CGPoint(x: rightArmOrigin.x, y: rightArmOrigin.y + bob))
 
             pixelLayer(rows: earthRows, origin: CGPoint(x: earthOrigin.x, y: earthOrigin.y + bob))
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
 
             eyes(origin: CGPoint(x: earthOrigin.x + 55, y: earthOrigin.y + 42 + bob))
-
-            if isCelebrating {
-                Text(object.emoji)
-                    .font(.system(size: 28))
-                    .position(x: 130, y: 18)
-                    .transition(.scale)
-            }
+            pixelLayer(rows: starRows, origin: CGPoint(x: starOrigin.x, y: starOrigin.y + bob + (isCelebrating ? -3 : 0)))
+                .scaleEffect(isCelebrating ? 1.08 : 1, anchor: .center)
         }
         .frame(width: canvasSize.width, height: canvasSize.height, alignment: .topLeading)
         .clipped()
@@ -62,98 +55,81 @@ struct MascotView: View {
     private var earthRows: [String] {
         [
             ".......DDDDDDD.......",
-            ".....DDDBBBBBBBDD....",
-            "....DBBGGGGGBBBBBD...",
-            "...DBGGGGGGBBBBBBBD..",
-            "..DBGGGGGGBBBBBBBBBD.",
-            ".DBBGGGGGBBBBBBGGBBBD",
-            ".DBBBGGGBBBBBBGGGGBBD",
-            "DBBBBBBBBBBBBBGGGGGBD",
-            "DBBBBBBEBBBBBEBBGGBBD",
-            "DBBBBBBEBBBBBEBBBBBBD",
-            "DBBBBBBBBBBBBBBGGGGBD",
-            ".DBBBBBGGBBBBBGGGGGBD",
-            ".DBBBBGGGGBBBBGGGGBD.",
-            "..DBBGGGGGGGGBBBBGD..",
-            "...DBGGGGGGGGBBBBD...",
-            "....DDBGGGGGBBBDD....",
-            ".....DDDBBBBBDD......",
+            ".....DDDGGGBBBDD....",
+            "....DGGGGGBBBBBBD...",
+            "...DGGGGGGBBBBBBBD..",
+            "..DGGGGGBBBBBBGGBBD.",
+            ".DBGGGBBBBBBBGGGGGBD",
+            ".DBBGGBBBBBBBGGGGGBD",
+            "DBBBBBBBBBBBBGGGGGGBD",
+            "DBBBBBBBBBBBGGGGBBBD",
+            "DBBBBBBBBBBBGGGGBBBD",
+            "DBBBBGGBBBBBBGGGGBBD",
+            ".DBBGGGGBBBBBBGGGBD.",
+            ".DBGGBBBBBBBBBBGGBD.",
+            "..DBBBGGGGBBBBBBBD..",
+            "...DGGGGGGGGBBBBD...",
+            "....DGGGGGGGGBBD....",
+            ".....DDGGGGGBDD.....",
             ".......DDDDDDD......."
         ]
     }
 
-    private func leftArmRows(frame: Int) -> [String] {
-        if frame == 0 || frame == 1 {
-            return [
-                "....DDD",
-                "...DDD.",
-                "..DDD..",
-                ".DDD...",
-                ".DDD...",
-                "..DD..."
-            ]
-        }
-
-        return [
-            "..DDD..",
-            ".DDD...",
-            ".DDD...",
-            "..DDD..",
-            "...DDD.",
-            "....DDD"
-        ]
-    }
-
-    private func rightArmRows(frame: Int, isCelebrating: Bool) -> [String] {
-        if isCelebrating {
-            return [
-                "DDD....",
-                ".DDD...",
-                "..DDD..",
-                "...DDD.",
-                "...DDD.",
-                "...DD.."
-            ]
-        }
-
-        if frame == 0 || frame == 1 {
-            return [
-                "..DDD..",
-                "...DDD.",
-                "...DDD.",
-                "..DDD..",
-                ".DDD...",
-                "DDD...."
-            ]
-        }
-
-        return [
+    private var leftArmRows: [String] {
+        [
+            ".....DD",
+            "....DD.",
+            "...DD..",
+            "..DD...",
+            ".DD....",
+            "DD.....",
             "DDD....",
-            ".DDD...",
-            "..DDD..",
-            "...DDD.",
-            "...DDD.",
-            "...DD.."
+            ".DDD..."
         ]
     }
 
-    private func legRows(forward: Bool) -> [String] {
-        forward
+    private var rightArmRows: [String] {
+        [
+            "....DD.",
+            "....DD.",
+            "...DD..",
+            "...DD..",
+            "..DD...",
+            "..DD...",
+            "DDD....",
+            "DD....."
+        ]
+    }
+
+    private var starRows: [String] {
+        [
+            "...R...",
+            "...R...",
+            ".RRRRR.",
+            "..RRR..",
+            ".RRRRR.",
+            "...R...",
+            "...R..."
+        ]
+    }
+
+    private func legRows(left: Bool) -> [String] {
+        left
         ? [
-            ".DD..",
-            ".DD..",
-            "..DD.",
-            "..DD.",
-            "..DDD",
-            ".DDDD"
+            "..DD",
+            "..DD",
+            ".DD.",
+            ".DD.",
+            "DDDD",
+            "DDDD"
         ]
         : [
-            "..DD.",
-            "..DD.",
-            ".DD..",
-            ".DD..",
-            "DDD..",
-            "DDDD."
+            "DD..",
+            "DD..",
+            ".DD.",
+            ".DD.",
+            "DDDD",
+            "DDDD"
         ]
     }
 }
@@ -162,6 +138,7 @@ private enum MascotPalette {
     static let dark = Color(red: 0.03, green: 0.14, blue: 0.40)
     static let ocean = Color(red: 0.24, green: 0.55, blue: 0.91)
     static let land = Color(red: 0.56, green: 0.74, blue: 0.39)
+    static let star = Color(red: 0.94, green: 0.22, blue: 0.16)
 
     static func color(for symbol: Character) -> Color? {
         switch symbol {
@@ -169,6 +146,7 @@ private enum MascotPalette {
         case "B": ocean
         case "G": land
         case "E": dark
+        case "R": star
         default: nil
         }
     }
