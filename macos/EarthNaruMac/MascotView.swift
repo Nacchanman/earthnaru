@@ -8,26 +8,41 @@ struct MascotView: View {
     private let pixel: CGFloat = 5
 
     var body: some View {
-        let frame = isCelebrating ? 4 : runFrame % 4
+        let frame = runFrame % 4
+        let bob: CGFloat = isCelebrating ? -4 : [0, -3, 0, -2][frame]
 
         ZStack {
             trophyObject
-                .offset(x: 50, y: 54)
+                .offset(x: 53, y: 55)
                 .opacity(isCelebrating ? 0.12 : 1)
 
-            PixelMap(rows: spriteRows(frame: frame), pixelSize: pixel)
-                .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
-                .offset(x: -18, y: isCelebrating ? -4 : 0)
+            ZStack {
+                legs(frame: frame)
+                    .offset(x: 0, y: 68 + bob)
 
-            if isCelebrating {
-                Text(object.emoji)
-                    .font(.system(size: 28))
-                    .offset(x: 43, y: -73)
-                    .transition(.scale)
+                leftArm(frame: frame)
+                    .offset(x: -55, y: 9 + bob)
+
+                rightArm(frame: frame, isCelebrating: isCelebrating)
+                    .offset(x: isCelebrating ? 55 : 55, y: isCelebrating ? -40 : 9 + bob)
+
+                pixelEarth
+                    .offset(x: 0, y: 12 + bob)
+
+                eyes
+                    .offset(x: 0, y: 12 + bob)
+
+                if isCelebrating {
+                    Text(object.emoji)
+                        .font(.system(size: 28))
+                        .offset(x: 61, y: -83)
+                        .transition(.scale)
+                }
             }
+            .frame(width: 154, height: 178)
         }
         .frame(width: 154, height: 178)
-        .animation(.spring(response: 0.18, dampingFraction: 0.78), value: runFrame)
+        .animation(.spring(response: 0.16, dampingFraction: 0.82), value: runFrame)
         .animation(.spring(response: 0.34, dampingFraction: 0.68), value: isCelebrating)
     }
 
@@ -44,136 +59,138 @@ struct MascotView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
-    private func spriteRows(frame: Int) -> [String] {
-        switch frame {
-        case 1:
-            return [
-                "..............DDDDDDD.......",
-                "............DDDBBBBBBBDD....",
-                "......DD...DBBGGGGGBBBBBD...",
-                ".....DD...DBGGGGGGBBBBBBBD..",
-                "....DD...DBGGGGGGBBBBBBBBBD.",
-                "...DD...DBBGGGGGBBBBBBGGBBBD",
-                "..DD....DBBBGGGBBBBBBGGGGBBD",
-                ".DD....DBBBBBBBBBBBBBGGGGGBD",
-                ".DDD...DBBBBBBEBBBBBEBBGGBBD",
-                "..DDD..DBBBBBBEBBBBBEBBBBBBD",
-                ".......DBBBBBBBBBBBBBBGGGGBD",
-                "........DBBBBBGGBBBBBGGGGGBD",
-                "........DBBBBGGGGBBBBGGGGBD.",
-                ".........DBBGGGGGGGGBBBBGD..",
-                "..........DBGGGGGGGGBBBBD...",
-                "...........DDBGGGGGBBBDD....",
-                "............DDDBBBBBDD......",
-                "..............DDDDDDD.......",
-                ".............DD....DD.......",
-                "............DD......DD......",
-                "...........DD........DD.....",
-                "...........DDDD.....DDDD...."
-            ]
-        case 2:
-            return [
-                "..............DDDDDDD.......",
-                "............DDDBBBBBBBDD....",
-                ".........DDDBBGGGGGBBBBBD...",
-                "........DDDBGGGGGGBBBBBBBD..",
-                ".......DDDBGGGGGGBBBBBBBBBD.",
-                "......DDDBBGGGGGBBBBBBGGBBBD",
-                ".....DD.DBBBGGGBBBBBBGGGGBBD",
-                "....DD.DBBBBBBBBBBBBBGGGGGBD",
-                "...DD..DBBBBBBEBBBBBEBBGGBBD",
-                "..DDD..DBBBBBBEBBBBBEBBBBBBD",
-                "..DD...DBBBBBBBBBBBBBBGGGGBD",
-                ".......DBBBBBGGBBBBBGGGGGBD",
-                "........DBBBBGGGGBBBBGGGGBD.",
-                ".........DBBGGGGGGGGBBBBGD..",
-                "..........DBGGGGGGGGBBBBD...",
-                "...........DDBGGGGGBBBDD....",
-                "............DDDBBBBBDD......",
-                "..............DDDDDDD.......",
-                "............DD......DD......",
-                "............DD......DD......",
-                "...........DDDD....DDDD.....",
-                "...........DDD......DDD....."
-            ]
-        case 3:
-            return [
-                "..............DDDDDDD.......",
-                "............DDDBBBBBBBDD....",
-                ".........DDDBBGGGGGBBBBBD...",
-                "........DDDBGGGGGGBBBBBBBD..",
-                ".......DDDBGGGGGGBBBBBBBBBD.",
-                "......DDDBBGGGGGBBBBBBGGBBBD",
-                ".....DD.DBBBGGGBBBBBBGGGGBBD",
-                "....DD.DBBBBBBBBBBBBBGGGGGBD",
-                "...DDD.DBBBBBEBBBBBEBBGGBBD",
-                "....DDDDBBBBBEBBBBBEBBBBBBD",
-                ".......DBBBBBBBBBBBBBBGGGGBD",
-                "........DBBBBBGGBBBBBGGGGGBD",
-                "........DBBBBGGGGBBBBGGGGBD.",
-                ".........DBBGGGGGGGGBBBBGD..",
-                "..........DBGGGGGGGGBBBBD...",
-                "...........DDBGGGGGBBBDD....",
-                "............DDDBBBBBDD......",
-                "..............DDDDDDD.......",
-                "..............DD..DD........",
-                ".............DD....DD.......",
-                "............DDDD..DDDD......",
-                "............DDD....DDD......"
-            ]
-        case 4:
-            return [
-                "......................DDD...",
-                ".....................DDD....",
-                "....................DDD.....",
-                "..............DDDDDDD.......",
-                "............DDDBBBBBBBDD....",
-                ".........DDDBBGGGGGBBBBBD...",
-                "........DDDBGGGGGGBBBBBBBD..",
-                ".......DDDBGGGGGGBBBBBBBBBD.",
-                "......DDDBBGGGGGBBBBBBGGBBBD",
-                ".....DD.DBBBGGGBBBBBBGGGGBBD",
-                "....DD.DBBBBBBBBBBBBBGGGGGBD",
-                "...DDD.DBBBBBEBBBBBEBBGGBBD",
-                "....DDDDBBBBBEBBBBBEBBBBBBD",
-                ".......DBBBBBBBBBBBBBBGGGGBD",
-                "........DBBBBBGGBBBBBGGGGGBD",
-                "........DBBBBGGGGBBBBGGGGBD.",
-                ".........DBBGGGGGGGGBBBBGD..",
-                "..........DBGGGGGGGGBBBBD...",
-                "...........DDBGGGGGBBBDD....",
-                "............DDDBBBBBDD......",
-                "..............DDDDDDD.......",
-                "..............DD..DD........",
-                ".............DD....DD.......",
-                "............DDDD..DDDD......"
-            ]
-        default:
-            return [
-                "..............DDDDDDD.......",
-                "............DDDBBBBBBBDD....",
-                ".........DDDBBGGGGGBBBBBD...",
-                "........DDDBGGGGGGBBBBBBBD..",
-                ".......DDDBGGGGGGBBBBBBBBBD.",
-                "......DDDBBGGGGGBBBBBBGGBBBD",
-                ".....DD.DBBBGGGBBBBBBGGGGBBD",
-                "....DD.DBBBBBBBBBBBBBGGGGGBD",
-                "...DDD.DBBBBBEBBBBBEBBGGBBD",
-                "....DDDDBBBBBEBBBBBEBBBBBBD",
-                ".......DBBBBBBBBBBBBBBGGGGBD",
-                "........DBBBBBGGBBBBBGGGGGBD",
-                "........DBBBBGGGGBBBBGGGGBD.",
-                ".........DBBGGGGGGGGBBBBGD..",
-                "..........DBGGGGGGGGBBBBD...",
-                "...........DDBGGGGGBBBDD....",
-                "............DDDBBBBBDD......",
-                "..............DDDDDDD.......",
-                ".............DD....DD.......",
-                ".............DD....DD.......",
-                "............DDDD..DDDD......",
-                "............DDD....DDD......"
-            ]
+    private var pixelEarth: some View {
+        PixelMap(
+            rows: [
+                ".......DDDDDDD.......",
+                ".....DDDBBBBBBBDD....",
+                "....DBBGGGGGBBBBBD...",
+                "...DBGGGGGGBBBBBBBD..",
+                "..DBGGGGGGBBBBBBBBBD.",
+                ".DBBGGGGGBBBBBBGGBBBD",
+                ".DBBBGGGBBBBBBGGGGBBD",
+                "DBBBBBBBBBBBBBGGGGGBD",
+                "DBBBBBBEBBBBBEBBGGBBD",
+                "DBBBBBBEBBBBBEBBBBBBD",
+                "DBBBBBBBBBBBBBBGGGGBD",
+                ".DBBBBBGGBBBBBGGGGGBD",
+                ".DBBBBGGGGBBBBGGGGBD.",
+                "..DBBGGGGGGGGBBBBGD..",
+                "...DBGGGGGGGGBBBBD...",
+                "....DDBGGGGGBBBDD....",
+                ".....DDDBBBBBDD......",
+                ".......DDDDDDD......."
+            ],
+            pixelSize: pixel
+        )
+        .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
+    }
+
+    private var eyes: some View {
+        HStack(spacing: 23) {
+            PixelBlock(width: 2, height: 6, pixelSize: 4, color: MascotPalette.dark)
+            PixelBlock(width: 2, height: 6, pixelSize: 4, color: MascotPalette.dark)
         }
+        .offset(y: -4)
+    }
+
+    private func leftArm(frame: Int) -> some View {
+        let backward = frame == 0 || frame == 1
+        return PixelMap(
+            rows: backward
+            ? [
+                "....DD.",
+                "...DD..",
+                "..DD...",
+                ".DD....",
+                "DD.....",
+                "DD.....",
+                ".DDD..."
+            ]
+            : [
+                "DD.....",
+                ".DD....",
+                "..DD...",
+                "...DD..",
+                "....DD.",
+                "....DD.",
+                "..DDD.."
+            ],
+            pixelSize: pixel
+        )
+    }
+
+    private func rightArm(frame: Int, isCelebrating: Bool) -> some View {
+        if isCelebrating {
+            return PixelMap(
+                rows: [
+                    "....DD.",
+                    "...DD..",
+                    "..DD...",
+                    ".DD....",
+                    "DD.....",
+                    "DD.....",
+                    ".DDD..."
+                ],
+                pixelSize: pixel
+            )
+        }
+
+        let forward = frame == 0 || frame == 1
+        return PixelMap(
+            rows: forward
+            ? [
+                "DD.....",
+                ".DD....",
+                "..DD...",
+                "...DD..",
+                "....DD.",
+                "....DD.",
+                "..DDD.."
+            ]
+            : [
+                "....DD.",
+                "...DD..",
+                "..DD...",
+                ".DD....",
+                "DD.....",
+                "DD.....",
+                ".DDD..."
+            ],
+            pixelSize: pixel
+        )
+    }
+
+    private func legs(frame: Int) -> some View {
+        let leftForward = frame == 0 || frame == 1
+        return HStack(spacing: 19) {
+            leg(forward: leftForward)
+            leg(forward: !leftForward)
+                .scaleEffect(x: -1, y: 1)
+        }
+    }
+
+    private func leg(forward: Bool) -> some View {
+        PixelMap(
+            rows: forward
+            ? [
+                "..DD.",
+                "..DD.",
+                ".DD..",
+                ".DD..",
+                "DDDD.",
+                "DDDD."
+            ]
+            : [
+                ".DD..",
+                ".DD..",
+                "..DD.",
+                "..DD.",
+                ".DDDD",
+                ".DDDD"
+            ],
+            pixelSize: pixel
+        )
     }
 }
 
@@ -220,6 +237,27 @@ private struct PixelMap: View {
             }
         }
         .frame(width: CGFloat(maxColumns) * pixelSize, height: CGFloat(rows.count) * pixelSize)
+    }
+}
+
+private struct PixelBlock: View {
+    let width: Int
+    let height: Int
+    let pixelSize: CGFloat
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<height, id: \.self) { _ in
+                HStack(spacing: 0) {
+                    ForEach(0..<width, id: \.self) { _ in
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: pixelSize, height: pixelSize)
+                    }
+                }
+            }
+        }
     }
 }
 
