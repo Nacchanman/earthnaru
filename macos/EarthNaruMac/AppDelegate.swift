@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         keyboardMonitor.onKeyDown = { [weak self] in
             Task { @MainActor in
                 self?.game.addKeypress()
+                self?.rebuildMenu()
             }
         }
 
@@ -52,13 +53,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func configureMenuBar() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = "🌍💪"
+        item.button?.title = "🌍 \(game.level)"
         statusItem = item
         rebuildMenu()
     }
 
     private func rebuildMenu() {
         let menu = NSMenu()
+        statusItem?.button?.title = game.isPaused ? "🌍 ⏸" : "🌍 \(game.level)"
 
         let statusTitle: String
         if keyboardMonitor.isRunning {
@@ -71,11 +73,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         status.isEnabled = false
         menu.addItem(status)
 
+        let progress = NSMenuItem(
+            title: "Today: \(game.todayKeys)/\(game.todayGoal) keys • Level \(game.level)",
+            action: nil,
+            keyEquivalent: ""
+        )
+        progress.isEnabled = false
+        menu.addItem(progress)
+
         menu.addItem(NSMenuItem.separator())
 
         menu.addItem(NSMenuItem(title: game.isPaused ? "Resume" : "Pause", action: #selector(togglePause), keyEquivalent: "p"))
-        menu.addItem(NSMenuItem(title: companionWindow?.isVisible == true ? "Hide Mascot" : "Show Mascot", action: #selector(toggleWindow), keyEquivalent: "m"))
-        menu.addItem(NSMenuItem(title: "Reset Progress", action: #selector(resetProgress), keyEquivalent: "r"))
+        menu.addItem(NSMenuItem(title: companionWindow?.isVisible == true ? "Hide Companion" : "Show Companion", action: #selector(toggleWindow), keyEquivalent: "m"))
+        menu.addItem(NSMenuItem(title: "Reset Today", action: #selector(resetToday), keyEquivalent: "d"))
+        menu.addItem(NSMenuItem(title: "Reset All Progress", action: #selector(resetProgress), keyEquivalent: "r"))
         menu.addItem(NSMenuItem(title: "Test +1 Key", action: #selector(testKeyCounter), keyEquivalent: "t"))
         menu.addItem(NSMenuItem(title: "Restart Key Counter", action: #selector(restartKeyCounter), keyEquivalent: "k"))
 
@@ -117,6 +128,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func resetProgress() {
         game.reset()
+        rebuildMenu()
+    }
+
+    @objc private func resetToday() {
+        game.resetToday()
+        rebuildMenu()
     }
 
     @objc private func testKeyCounter() {
