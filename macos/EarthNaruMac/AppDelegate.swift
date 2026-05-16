@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var companionWindow: CompanionWindowController?
     private var statusItem: NSStatusItem?
     private var permissionRetryTimer: Timer?
+    private var diagnosticRefreshTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -21,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         permissionRetryTimer?.invalidate()
+        diagnosticRefreshTimer?.invalidate()
         keyboardMonitor.stop()
     }
 
@@ -55,7 +57,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.title = "🌍 \(game.level)"
         statusItem = item
+        startDiagnosticRefresh()
         rebuildMenu()
+    }
+
+    private func startDiagnosticRefresh() {
+        diagnosticRefreshTimer?.invalidate()
+        diagnosticRefreshTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.keyboardMonitor.refreshDiagnostics()
+                self?.rebuildMenu()
+            }
+        }
     }
 
     private func rebuildMenu() {

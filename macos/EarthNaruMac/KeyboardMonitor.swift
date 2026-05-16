@@ -1,5 +1,6 @@
 import AppKit
 import ApplicationServices
+import Carbon.HIToolbox
 import Foundation
 import IOKit.hid
 
@@ -13,12 +14,15 @@ final class KeyboardMonitor {
     private var globalMonitor: Any?
     private var lastEventTime: TimeInterval = 0
     private var totalEventsSeen = 0
+    private var installNotes: [String] = []
 
     private(set) var isRunning = false
     private(set) var lastError: String?
     private(set) var lastEventSource: String?
+    private(set) var lastEventAge: TimeInterval?
     private(set) var accessibilityTrusted = false
     private(set) var inputMonitoringTrusted = false
+    private(set) var secureEventInputEnabled = false
 
     var activeMonitorSummary: String {
         var active: [String] = []
@@ -32,8 +36,20 @@ final class KeyboardMonitor {
     var diagnosticSummary: String {
         let accessibility = accessibilityTrusted ? "AX ok" : "AX off"
         let input = inputMonitoringTrusted ? "Input ok" : "Input off"
-        let last = lastEventSource.map { "last \($0) #\(totalEventsSeen)" } ?? "no keys yet"
-        return "\(activeMonitorSummary); \(accessibility); \(input); \(last)"
+        let secure = secureEventInputEnabled ? "Secure Input ON" : "Secure Input off"
+        let last = lastEventSummary
+        let notes = installNotes.isEmpty ? "" : "; \(installNotes.joined(separator: ", "))"
+        return "\(activeMonitorSummary); \(accessibility); \(input); \(secure); \(last)\(notes)"
+    }
+
+    private var lastEventSummary: String {
+        guard let lastEventSource else { return "no keys yet" }
+
+        if let lastEventAge {
+            return "last \(lastEventSource) #\(totalEventsSeen) \(Int(lastEventAge))s ago"
+        }
+
+        return "last \(lastEventSource) #\(totalEventsSeen)"
     }
 
     static func isAccessibilityTrusted(prompt: Bool) -> Bool {
@@ -58,14 +74,29 @@ final class KeyboardMonitor {
         _ = Self.isInputMonitoringTrusted(prompt: true)
     }
 
+    func refreshDiagnostics() {
+        inputMonitoringTrusted = Self.isInputMonitoringTrusted(prompt: false)
+        accessibilityTrusted = Self.isAccessibilityTrusted(prompt: false)
+        secureEventInputEnabled = IsSecureEventInputEnabled()
+
+        if lastEventTime > 0 {
+            lastEventAge = ProcessInfo.processInfo.systemUptime - lastEventTime
+        }
+    }
+
     @discardableResult
     func start(promptForPermission: Bool = false) -> Bool {
         lastError = nil
+        installNotes = []
 
         installLocalMonitor()
 
-        inputMonitoringTrusted = Self.isInputMonitoringTrusted(prompt: promptForPermission)
-        accessibilityTrusted = Self.isAccessibilityTrusted(prompt: promptForPermission)
+        if promptForPermission {
+            _ = Self.isInputMonitoringTrusted(prompt: true)
+            _ = Self.isAccessibilityTrusted(prompt: true)
+        }
+
+        refreshDiagnostics()
 
         // macOS privacy preflight can disagree with the actual running binary after
         // Xcode rebuilds or app relocation. Try installing every background route and
@@ -133,6 +164,10 @@ final class KeyboardMonitor {
             self?.handleKeyEvent(source: "Local", isRepeat: event.isARepeat)
             return event
         }
+
+        if localMonitor == nil {
+            installNotes.append("Local failed")
+        }
     }
 
     private func installGlobalMonitor() {
@@ -140,6 +175,10 @@ final class KeyboardMonitor {
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handleKeyEvent(source: "Global", isRepeat: event.isARepeat)
+        }
+
+        if globalMonitor == nil {
+            installNotes.append("Global failed")
         }
     }
 
@@ -174,6 +213,7 @@ final class KeyboardMonitor {
         if result == kIOReturnSuccess {
             hidManager = manager
         } else {
+            installNotes.append("HID \(String(format: "0x%08x", result))")
             IOHIDManagerUnscheduleFromRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
             IOHIDManagerClose(manager, IOOptionBits(kIOHIDOptionsTypeNone))
         }
@@ -186,6 +226,7 @@ final class KeyboardMonitor {
         // then fall back to the session tap because some user configurations allow the
         // session-level tap even when IOHID callbacks do not fire for background apps.
         guard let tap = makeEventTap(location: .cghidEventTap) ?? makeEventTap(location: .cgSessionEventTap) else {
+            installNotes.append("Tap failed")
             return
         }
 
@@ -240,6 +281,7 @@ final class KeyboardMonitor {
         guard now - lastEventTime > 0.015 else { return }
         lastEventTime = now
         lastEventSource = source
+        lastEventAge = 0
         totalEventsSeen += 1
 
         onKeyDown?()
