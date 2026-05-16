@@ -6,42 +6,27 @@ struct MascotView: View {
     let runFrame: Int
 
     private let pixel: CGFloat = 5
+    private let canvasSize = CGSize(width: 154, height: 178)
 
     var body: some View {
         let frame = isCelebrating ? 4 : runFrame % 4
 
         ZStack {
             PixelMap(rows: spriteRows(frame: frame), pixelSize: pixel)
+                .frame(width: canvasSize.width, height: canvasSize.height)
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-
-            trophyObject
-                .offset(x: 46, y: 56)
-                .opacity(isCelebrating ? 0.12 : 1)
 
             if isCelebrating {
                 Text(object.emoji)
                     .font(.system(size: 28))
-                    .offset(x: 52, y: -76)
+                    .offset(x: 46, y: -73)
                     .transition(.scale)
             }
         }
-        .frame(width: 154, height: 178, alignment: .center)
+        .frame(width: canvasSize.width, height: canvasSize.height, alignment: .center)
+        .clipped()
         .animation(.spring(response: 0.16, dampingFraction: 0.82), value: runFrame)
         .animation(.spring(response: 0.34, dampingFraction: 0.68), value: isCelebrating)
-    }
-
-    private var trophyObject: some View {
-        VStack(spacing: 1) {
-            Text(object.emoji)
-                .font(.system(size: 22))
-            Text("Lv.\(object.level)")
-                .font(.system(size: 8, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
-        }
-        .padding(4)
-        .background(.white.opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private func spriteRows(frame: Int) -> [String] {
@@ -206,9 +191,7 @@ private struct PixelMap: View {
     private var trimmedPixels: [(row: Int, column: Int, color: Color)] {
         let matrix = rows.map { Array($0) }
         var minRow = Int.max
-        var maxRow = Int.min
         var minColumn = Int.max
-        var maxColumn = Int.min
         var rawPixels: [(row: Int, column: Int, color: Color)] = []
 
         for (rowIndex, row) in matrix.enumerated() {
@@ -216,9 +199,7 @@ private struct PixelMap: View {
                 guard let color = MascotPalette.color(for: symbol) else { continue }
                 rawPixels.append((rowIndex, columnIndex, color))
                 minRow = min(minRow, rowIndex)
-                maxRow = max(maxRow, rowIndex)
                 minColumn = min(minColumn, columnIndex)
-                maxColumn = max(maxColumn, columnIndex)
             }
         }
 
@@ -244,22 +225,25 @@ private struct PixelMap: View {
         let pixels = trimmedPixels
         let dimensions = dimensions
 
-        ZStack(alignment: .topLeading) {
-            ForEach(Array(pixels.enumerated()), id: \.offset) { _, pixel in
-                Rectangle()
-                    .fill(pixel.color)
-                    .frame(width: pixelSize, height: pixelSize)
-                    .offset(
-                        x: CGFloat(pixel.column) * pixelSize,
-                        y: CGFloat(pixel.row) * pixelSize
-                    )
+        GeometryReader { geometry in
+            let spriteWidth = CGFloat(dimensions.columns) * pixelSize
+            let spriteHeight = CGFloat(dimensions.rows) * pixelSize
+            let originX = floor((geometry.size.width - spriteWidth) / 2)
+            let originY = floor((geometry.size.height - spriteHeight) / 2)
+
+            ZStack(alignment: .topLeading) {
+                ForEach(Array(pixels.enumerated()), id: \.offset) { _, pixel in
+                    Rectangle()
+                        .fill(pixel.color)
+                        .frame(width: pixelSize, height: pixelSize)
+                        .offset(
+                            x: originX + CGFloat(pixel.column) * pixelSize,
+                            y: originY + CGFloat(pixel.row) * pixelSize
+                        )
+                }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
         }
-        .frame(
-            width: CGFloat(dimensions.columns) * pixelSize,
-            height: CGFloat(dimensions.rows) * pixelSize,
-            alignment: .center
-        )
     }
 }
 
