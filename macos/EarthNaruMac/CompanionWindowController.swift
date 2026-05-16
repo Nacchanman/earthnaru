@@ -20,6 +20,7 @@ enum CompanionCorner: String, CaseIterable {
 final class CompanionWindowController {
     private let window: NSWindow
     private var corner: CompanionCorner = .bottomRight
+    private let windowSize = NSSize(width: 278, height: 392)
 
     var isVisible: Bool {
         window.isVisible
@@ -30,7 +31,7 @@ final class CompanionWindowController {
         let hostingView = NSHostingView(rootView: contentView)
 
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 210, height: 300),
+            contentRect: NSRect(origin: .zero, size: windowSize),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
