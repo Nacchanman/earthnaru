@@ -7,40 +7,53 @@ struct MascotView: View {
 
     private let pixel: CGFloat = 5
     private let canvasSize = CGSize(width: 154, height: 178)
-    private let bodyCenter = CGPoint(x: 77, y: 88)
+
+    private let earthOrigin = CGPoint(x: 25, y: 44)
+    private let leftArmOrigin = CGPoint(x: 16, y: 76)
+    private let rightArmOrigin = CGPoint(x: 112, y: 76)
+    private let leftLegOrigin = CGPoint(x: 52, y: 130)
+    private let rightLegOrigin = CGPoint(x: 90, y: 130)
 
     var body: some View {
         let frame = runFrame % 4
         let bob: CGFloat = isCelebrating ? -4 : [0, -3, 0, -2][frame]
 
-        ZStack {
-            legs(frame: frame)
-                .position(x: bodyCenter.x, y: bodyCenter.y + 60 + bob)
+        ZStack(alignment: .topLeading) {
+            pixelLayer(rows: legRows(forward: frame == 0 || frame == 1), origin: CGPoint(x: leftLegOrigin.x, y: leftLegOrigin.y + bob))
+            pixelLayer(rows: legRows(forward: !(frame == 0 || frame == 1)), origin: CGPoint(x: rightLegOrigin.x, y: rightLegOrigin.y + bob))
 
-            leftArm(frame: frame)
-                .position(x: bodyCenter.x - 54, y: bodyCenter.y + 4 + bob)
+            pixelLayer(rows: leftArmRows(frame: frame), origin: CGPoint(x: leftArmOrigin.x, y: leftArmOrigin.y + bob))
+            pixelLayer(rows: rightArmRows(frame: frame, isCelebrating: isCelebrating), origin: CGPoint(x: rightArmOrigin.x, y: rightArmOrigin.y + (isCelebrating ? -46 : 0) + bob))
 
-            rightArm(frame: frame, isCelebrating: isCelebrating)
-                .position(x: bodyCenter.x + 54, y: bodyCenter.y + (isCelebrating ? -42 : 4) + bob)
-
-            PixelGrid(rows: earthRows, pixelSize: pixel)
+            pixelLayer(rows: earthRows, origin: CGPoint(x: earthOrigin.x, y: earthOrigin.y + bob))
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
-                .position(x: bodyCenter.x, y: bodyCenter.y + bob)
 
-            eyes
-                .position(x: bodyCenter.x + 13, y: bodyCenter.y - 2 + bob)
+            eyes(origin: CGPoint(x: earthOrigin.x + 55, y: earthOrigin.y + 42 + bob))
 
             if isCelebrating {
                 Text(object.emoji)
                     .font(.system(size: 28))
-                    .position(x: bodyCenter.x + 58, y: bodyCenter.y - 84)
+                    .position(x: 130, y: 24)
                     .transition(.scale)
             }
         }
-        .frame(width: canvasSize.width, height: canvasSize.height, alignment: .center)
+        .frame(width: canvasSize.width, height: canvasSize.height, alignment: .topLeading)
         .clipped()
         .animation(.spring(response: 0.16, dampingFraction: 0.82), value: runFrame)
         .animation(.spring(response: 0.34, dampingFraction: 0.68), value: isCelebrating)
+    }
+
+    private func pixelLayer(rows: [String], origin: CGPoint) -> some View {
+        PixelGrid(rows: rows, pixelSize: pixel)
+            .offset(x: origin.x, y: origin.y)
+    }
+
+    private func eyes(origin: CGPoint) -> some View {
+        HStack(spacing: 22) {
+            PixelBlock(width: 2, height: 5, pixelSize: 4, color: MascotPalette.dark)
+            PixelBlock(width: 2, height: 5, pixelSize: 4, color: MascotPalette.dark)
+        }
+        .offset(x: origin.x, y: origin.y)
     }
 
     private var earthRows: [String] {
@@ -66,17 +79,9 @@ struct MascotView: View {
         ]
     }
 
-    private var eyes: some View {
-        HStack(spacing: 22) {
-            PixelBlock(width: 2, height: 5, pixelSize: 4, color: MascotPalette.dark)
-            PixelBlock(width: 2, height: 5, pixelSize: 4, color: MascotPalette.dark)
-        }
-    }
-
-    private func leftArm(frame: Int) -> some View {
-        let rows: [String]
+    private func leftArmRows(frame: Int) -> [String] {
         if frame == 0 || frame == 1 {
-            rows = [
+            return [
                 "....DD",
                 "...DD.",
                 "..DD..",
@@ -85,23 +90,22 @@ struct MascotView: View {
                 "DD....",
                 ".DDD.."
             ]
-        } else {
-            rows = [
-                "DD....",
-                ".DD...",
-                "..DD..",
-                "...DD.",
-                "....DD",
-                "....DD",
-                "..DDD."
-            ]
         }
-        return PixelGrid(rows: rows, pixelSize: pixel)
+
+        return [
+            "DD....",
+            ".DD...",
+            "..DD..",
+            "...DD.",
+            "....DD",
+            "....DD",
+            "..DDD."
+        ]
     }
 
-    private func rightArm(frame: Int, isCelebrating: Bool) -> some View {
+    private func rightArmRows(frame: Int, isCelebrating: Bool) -> [String] {
         if isCelebrating {
-            return PixelGrid(rows: [
+            return [
                 "....DD",
                 "...DD.",
                 "..DD..",
@@ -109,12 +113,11 @@ struct MascotView: View {
                 "DD....",
                 "DD....",
                 ".DDD.."
-            ], pixelSize: pixel)
+            ]
         }
 
-        let rows: [String]
         if frame == 0 || frame == 1 {
-            rows = [
+            return [
                 "DD....",
                 ".DD...",
                 "..DD..",
@@ -123,50 +126,37 @@ struct MascotView: View {
                 "....DD",
                 "..DDD."
             ]
-        } else {
-            rows = [
-                "....DD",
-                "...DD.",
-                "..DD..",
-                ".DD...",
-                "DD....",
-                "DD....",
-                ".DDD.."
-            ]
         }
-        return PixelGrid(rows: rows, pixelSize: pixel)
+
+        return [
+            "....DD",
+            "...DD.",
+            "..DD..",
+            ".DD...",
+            "DD....",
+            "DD....",
+            ".DDD.."
+        ]
     }
 
-    private func legs(frame: Int) -> some View {
-        let leftForward = frame == 0 || frame == 1
-        return HStack(spacing: 18) {
-            leg(forward: leftForward)
-            leg(forward: !leftForward)
-                .scaleEffect(x: -1, y: 1)
-        }
-    }
-
-    private func leg(forward: Bool) -> some View {
-        PixelGrid(
-            rows: forward
-            ? [
-                "..DD.",
-                "..DD.",
-                ".DD..",
-                ".DD..",
-                "DDDD.",
-                "DDDD."
-            ]
-            : [
-                ".DD..",
-                ".DD..",
-                "..DD.",
-                "..DD.",
-                ".DDDD",
-                ".DDDD"
-            ],
-            pixelSize: pixel
-        )
+    private func legRows(forward: Bool) -> [String] {
+        forward
+        ? [
+            "..DD.",
+            "..DD.",
+            ".DD..",
+            ".DD..",
+            "DDDD.",
+            "DDDD."
+        ]
+        : [
+            ".DD..",
+            ".DD..",
+            "..DD.",
+            "..DD.",
+            ".DDDD",
+            ".DDDD"
+        ]
     }
 }
 
@@ -190,47 +180,26 @@ private struct PixelGrid: View {
     let rows: [String]
     let pixelSize: CGFloat
 
-    private var pixels: [(row: Int, column: Int, color: Color)] {
-        var minRow = Int.max
-        var minColumn = Int.max
-        var raw: [(row: Int, column: Int, color: Color)] = []
-
-        for (rowIndex, row) in rows.map({ Array($0) }).enumerated() {
-            for (columnIndex, symbol) in row.enumerated() {
-                guard let color = MascotPalette.color(for: symbol) else { continue }
-                raw.append((rowIndex, columnIndex, color))
-                minRow = min(minRow, rowIndex)
-                minColumn = min(minColumn, columnIndex)
-            }
-        }
-
-        guard minRow != Int.max else { return [] }
-        return raw.map { ($0.row - minRow, $0.column - minColumn, $0.color) }
-    }
-
-    private var dimensions: (columns: Int, rows: Int) {
-        let px = pixels
-        return ((px.map(\.column).max() ?? 0) + 1, (px.map(\.row).max() ?? 0) + 1)
-    }
-
     var body: some View {
-        let px = pixels
-        let dimensions = dimensions
-
         ZStack(alignment: .topLeading) {
-            ForEach(Array(px.enumerated()), id: \.offset) { _, pixel in
-                Rectangle()
-                    .fill(pixel.color)
-                    .frame(width: pixelSize, height: pixelSize)
-                    .offset(
-                        x: CGFloat(pixel.column) * pixelSize,
-                        y: CGFloat(pixel.row) * pixelSize
-                    )
+            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
+                ForEach(Array(Array(row).enumerated()), id: \.offset) { columnIndex, symbol in
+                    if let color = MascotPalette.color(for: symbol) {
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: pixelSize, height: pixelSize)
+                            .offset(
+                                x: CGFloat(columnIndex) * pixelSize,
+                                y: CGFloat(rowIndex) * pixelSize
+                            )
+                    }
+                }
             }
         }
         .frame(
-            width: CGFloat(dimensions.columns) * pixelSize,
-            height: CGFloat(dimensions.rows) * pixelSize
+            width: CGFloat(rows.map { $0.count }.max() ?? 0) * pixelSize,
+            height: CGFloat(rows.count) * pixelSize,
+            alignment: .topLeading
         )
     }
 }
