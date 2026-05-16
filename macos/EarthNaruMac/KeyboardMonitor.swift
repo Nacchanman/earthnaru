@@ -1,12 +1,14 @@
 import AppKit
 import ApplicationServices
 import Foundation
+import IOKit.hid
 
 final class KeyboardMonitor {
     var onKeyDown: (() -> Void)?
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var hidManager: IOHIDManager?
     private var localMonitor: Any?
     private var globalMonitor: Any?
     private var lastEventTime: TimeInterval = 0
@@ -32,15 +34,18 @@ final class KeyboardMonitor {
         installLocalMonitor()
 
         guard Self.isAccessibilityTrusted(prompt: promptForPermission) else {
-            lastError = "Accessibility is off. Enable EarthNaruMac, then restart the app."
+            lastError = "Accessibility is off. Enable EarthNaruMac, then quit and relaunch the app."
             return false
         }
 
+        // Use three paths, because macOS can allow one and block another depending on
+        // launch context, privacy database state, and whether the app was just rebuilt.
+        installHIDMonitor()
         installEventTap()
         installGlobalMonitor()
 
-        guard eventTap != nil || globalMonitor != nil else {
-            lastError = "Keyboard monitor could not start. Quit EarthNaruMac, relaunch it from Xcode, then choose Restart Key Counter."
+        guard hidManager != nil || eventTap != nil || globalMonitor != nil else {
+            lastError = "Keyboard monitor could not start. Enable Accessibility and Input Monitoring for EarthNaruMac, then relaunch."
             return false
         }
 
@@ -58,6 +63,11 @@ final class KeyboardMonitor {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         }
 
+        if let hidManager {
+            IOHIDManagerUnscheduleFromRunLoop(hidManager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+            IOHIDManagerClose(hidManager, IOOptionBits(kIOHIDOptionsTypeNone))
+        }
+
         if let localMonitor {
             NSEvent.removeMonitor(localMonitor)
         }
@@ -68,6 +78,7 @@ final class KeyboardMonitor {
 
         eventTap = nil
         runLoopSource = nil
+        hidManager = nil
         localMonitor = nil
         globalMonitor = nil
         isRunning = false
@@ -87,6 +98,42 @@ final class KeyboardMonitor {
 
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.handleKeyEvent(isRepeat: event.isARepeat)
+        }
+    }
+
+    private func installHIDMonitor() {
+        guard hidManager == nil else { return }
+
+        let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
+        let keyboardMatch: [String: Any] = [
+            kIOHIDDeviceUsagePageKey: kHIDPage_GenericDesktop,
+            kIOHIDDeviceUsageKey: kHIDUsage_GD_Keyboard
+        ]
+
+        IOHIDManagerSetDeviceMatchingMultiple(manager, [keyboardMatch] as CFArray)
+
+        let context = Unmanaged.passUnretained(self).toOpaque()
+        IOHIDManagerRegisterInputValueCallback(manager, { context, _, _, value in
+            guard let context else { return }
+
+            let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(context).takeUnretainedValue()
+            let element = IOHIDValueGetElement(value)
+            let page = IOHIDElementGetUsagePage(element)
+            let usage = IOHIDElementGetUsage(element)
+            let pressed = IOHIDValueGetIntegerValue(value) != 0
+
+            guard page == UInt32(kHIDPage_KeyboardOrKeypad), usage > 0, pressed else { return }
+            monitor.handleKeyEvent(isRepeat: false)
+        }, context)
+
+        IOHIDManagerScheduleWithRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+        let result = IOHIDManagerOpen(manager, IOOptionBits(kIOHIDOptionsTypeNone))
+
+        if result == kIOReturnSuccess {
+            hidManager = manager
+        } else {
+            IOHIDManagerUnscheduleFromRunLoop(manager, CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue)
+            IOHIDManagerClose(manager, IOOptionBits(kIOHIDOptionsTypeNone))
         }
     }
 
@@ -140,6 +187,8 @@ final class KeyboardMonitor {
     private func handleKeyEvent(isRepeat: Bool) {
         guard !isRepeat else { return }
 
+        // HID, event tap, and global monitor can fire for the same physical key.
+        // Keep the first one and drop near-duplicates.
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastEventTime > 0.015 else { return }
         lastEventTime = now
