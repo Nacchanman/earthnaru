@@ -16,6 +16,15 @@ final class KeyboardMonitor {
     private(set) var isRunning = false
     private(set) var lastError: String?
 
+    var activeMonitorSummary: String {
+        var active: [String] = []
+        if hidManager != nil { active.append("HID") }
+        if eventTap != nil { active.append("Tap") }
+        if globalMonitor != nil { active.append("Global") }
+        if localMonitor != nil { active.append("Local") }
+        return active.isEmpty ? "none" : active.joined(separator: "+")
+    }
+
     static func isAccessibilityTrusted(prompt: Bool) -> Bool {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
         let options = [key: prompt] as CFDictionary
@@ -38,8 +47,6 @@ final class KeyboardMonitor {
             return false
         }
 
-        // Use three paths, because macOS can allow one and block another depending on
-        // launch context, privacy database state, and whether the app was just rebuilt.
         installHIDMonitor()
         installEventTap()
         installGlobalMonitor()
@@ -187,8 +194,6 @@ final class KeyboardMonitor {
     private func handleKeyEvent(isRepeat: Bool) {
         guard !isRepeat else { return }
 
-        // HID, event tap, and global monitor can fire for the same physical key.
-        // Keep the first one and drop near-duplicates.
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastEventTime > 0.015 else { return }
         lastEventTime = now
