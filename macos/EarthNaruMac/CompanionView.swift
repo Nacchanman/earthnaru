@@ -17,8 +17,12 @@ struct CompanionView: View {
             ProgressView(value: game.progressToNextLevel)
                 .controlSize(.small)
 
-            MascotView(object: game.currentObject, isCelebrating: game.isCelebrating)
-                .frame(width: 180, height: 215)
+            MascotView(
+                object: game.currentObject,
+                isCelebrating: game.isCelebrating,
+                runFrame: game.runFrame
+            )
+            .frame(width: 154, height: 178)
 
             HStack(spacing: 4) {
                 Text(game.isPaused ? "Paused" : "Training")
