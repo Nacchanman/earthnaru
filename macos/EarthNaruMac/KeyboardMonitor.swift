@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 import Foundation
 
@@ -6,7 +7,11 @@ final class KeyboardMonitor {
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var localMonitor: Any?
+    private var globalMonitor: Any?
+
     private(set) var isRunning = false
+    private(set) var lastError: String?
 
     static func isAccessibilityTrusted(prompt: Bool) -> Bool {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
@@ -14,9 +19,17 @@ final class KeyboardMonitor {
         return AXIsProcessTrustedWithOptions(options)
     }
 
-    func start() {
-        guard !isRunning else { return }
-        guard Self.isAccessibilityTrusted(prompt: true) else { return }
+    @discardableResult
+    func start() -> Bool {
+        guard !isRunning else { return true }
+        lastError = nil
+
+        installLocalMonitor()
+
+        guard Self.isAccessibilityTrusted(prompt: true) else {
+            lastError = "Accessibility permission is required for global key counting."
+            return false
+        }
 
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
         let userInfo = Unmanaged.passUnretained(self).toOpaque()
@@ -32,17 +45,21 @@ final class KeyboardMonitor {
                 }
 
                 let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(userInfo).takeUnretainedValue()
-                let isRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
-
-                if !isRepeat {
-                    monitor.onKeyDown?()
-                }
+                monitor.handleKeyEvent(isRepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0)
 
                 return Unmanaged.passUnretained(event)
             },
             userInfo: userInfo
         ) else {
-            return
+            installGlobalMonitorFallback()
+            if globalMonitor != nil {
+                isRunning = true
+                lastError = nil
+                return true
+            }
+
+            lastError = "Unable to create keyboard event tap. Check Accessibility permission and restart the app."
+            return false
         }
 
         eventTap = tap
@@ -54,6 +71,7 @@ final class KeyboardMonitor {
 
         CGEvent.tapEnable(tap: tap, enable: true)
         isRunning = true
+        return true
     }
 
     func stop() {
@@ -66,8 +84,40 @@ final class KeyboardMonitor {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
         }
 
+        if let localMonitor {
+            NSEvent.removeMonitor(localMonitor)
+        }
+
+        if let globalMonitor {
+            NSEvent.removeMonitor(globalMonitor)
+        }
+
         eventTap = nil
         runLoopSource = nil
+        localMonitor = nil
+        globalMonitor = nil
         isRunning = false
+    }
+
+    private func installLocalMonitor() {
+        guard localMonitor == nil else { return }
+
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            self?.handleKeyEvent(isRepeat: event.isARepeat)
+            return event
+        }
+    }
+
+    private func installGlobalMonitorFallback() {
+        guard globalMonitor == nil else { return }
+
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            self?.handleKeyEvent(isRepeat: event.isARepeat)
+        }
+    }
+
+    private func handleKeyEvent(isRepeat: Bool) {
+        guard !isRepeat else { return }
+        onKeyDown?()
     }
 }
