@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         companionWindow?.show()
 
         configureMenuBar()
-        startKeyboardMonitorIfAllowed()
+        startKeyboardMonitorIfAllowed(promptForPermission: false)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -24,28 +24,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         keyboardMonitor.stop()
     }
 
-    private func startKeyboardMonitorIfAllowed() {
+    private func startKeyboardMonitorIfAllowed(promptForPermission: Bool) {
         keyboardMonitor.onKeyDown = { [weak self] in
             Task { @MainActor in
                 self?.game.addKeypress()
             }
         }
 
-        if keyboardMonitor.start() {
+        if keyboardMonitor.start(promptForPermission: promptForPermission) {
             permissionRetryTimer?.invalidate()
             permissionRetryTimer = nil
         } else {
-            schedulePermissionRetry()
+            scheduleSilentPermissionRetry()
         }
 
         rebuildMenu()
     }
 
-    private func schedulePermissionRetry() {
+    private func scheduleSilentPermissionRetry() {
         permissionRetryTimer?.invalidate()
-        permissionRetryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+        permissionRetryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.startKeyboardMonitorIfAllowed()
+                self?.startKeyboardMonitorIfAllowed(promptForPermission: false)
             }
         }
     }
@@ -91,6 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(cornerMenu)
 
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Request Accessibility Permission", action: #selector(requestAccessibilityPermission), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Open Accessibility Settings", action: #selector(openAccessibilitySettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit EarthNaru", action: #selector(quit), keyEquivalent: "q"))
 
@@ -117,7 +118,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func restartKeyCounter() {
         keyboardMonitor.stop()
-        startKeyboardMonitorIfAllowed()
+        startKeyboardMonitorIfAllowed(promptForPermission: false)
+    }
+
+    @objc private func requestAccessibilityPermission() {
+        keyboardMonitor.requestAccessibilityPermission()
+        startKeyboardMonitorIfAllowed(promptForPermission: false)
     }
 
     @objc private func moveWindow(_ sender: NSMenuItem) {
