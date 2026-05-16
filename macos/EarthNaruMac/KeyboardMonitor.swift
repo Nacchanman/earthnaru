@@ -19,15 +19,19 @@ final class KeyboardMonitor {
         return AXIsProcessTrustedWithOptions(options)
     }
 
+    func requestAccessibilityPermission() {
+        _ = Self.isAccessibilityTrusted(prompt: true)
+    }
+
     @discardableResult
-    func start() -> Bool {
+    func start(promptForPermission: Bool = false) -> Bool {
         guard !isRunning else { return true }
         lastError = nil
 
         installLocalMonitor()
 
-        guard Self.isAccessibilityTrusted(prompt: true) else {
-            lastError = "Accessibility permission is required for global key counting."
+        guard Self.isAccessibilityTrusted(prompt: promptForPermission) else {
+            lastError = "Accessibility permission is off. Use the menu to open settings, then enable EarthNaruMac."
             return false
         }
 
@@ -58,7 +62,7 @@ final class KeyboardMonitor {
                 return true
             }
 
-            lastError = "Unable to create keyboard event tap. Check Accessibility permission and restart the app."
+            lastError = "Unable to create keyboard event tap. Enable Accessibility, then use Restart Key Counter."
             return false
         }
 
