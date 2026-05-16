@@ -12,17 +12,17 @@ struct MascotView: View {
 
         ZStack {
             trophyObject
-                .offset(x: 56, y: 54)
+                .offset(x: 50, y: 54)
                 .opacity(isCelebrating ? 0.12 : 1)
 
             PixelMap(rows: spriteRows(frame: frame), pixelSize: pixel)
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
-                .offset(y: isCelebrating ? -4 : 0)
+                .offset(x: -18, y: isCelebrating ? -4 : 0)
 
             if isCelebrating {
                 Text(object.emoji)
                     .font(.system(size: 28))
-                    .offset(x: 61, y: -73)
+                    .offset(x: 43, y: -73)
                     .transition(.scale)
             }
         }
