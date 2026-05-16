@@ -77,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let statusTitle: String
         if keyboardMonitor.isRunning {
-            statusTitle = "Key counter: On (\(keyboardMonitor.diagnosticSummary))"
+            statusTitle = "Key counter: On (\(keyboardMonitor.activeMonitorSummary))"
         } else {
             statusTitle = keyboardMonitor.lastError ?? "Key counter: Needs permission"
         }
@@ -85,6 +85,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let status = NSMenuItem(title: statusTitle, action: nil, keyEquivalent: "")
         status.isEnabled = false
         menu.addItem(status)
+
+        let permissions = NSMenuItem(title: "Permissions: \(keyboardMonitor.permissionSummary)", action: nil, keyEquivalent: "")
+        permissions.isEnabled = false
+        menu.addItem(permissions)
+
+        let lastKey = NSMenuItem(title: "Last key: \(keyboardMonitor.lastEventSummary)", action: nil, keyEquivalent: "")
+        lastKey.isEnabled = false
+        menu.addItem(lastKey)
+
+        let install = NSMenuItem(title: "Monitor install: \(keyboardMonitor.installSummary)", action: nil, keyEquivalent: "")
+        install.isEnabled = false
+        menu.addItem(install)
+
+        if keyboardMonitor.likelyPermissionTargetMismatch {
+            let hint = NSMenuItem(
+                title: "Fix: remove old EarthNaruMac entries, add this exact app, then relaunch.",
+                action: nil,
+                keyEquivalent: ""
+            )
+            hint.isEnabled = false
+            menu.addItem(hint)
+        }
 
         let progress = NSMenuItem(
             title: "Today: \(game.todayKeys)/\(game.todayGoal) keys • Level \(game.level)",
@@ -120,6 +142,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Request Input Monitoring Permission", action: #selector(requestInputMonitoringPermission), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Open Accessibility Settings", action: #selector(openAccessibilitySettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Open Input Monitoring Settings", action: #selector(openInputMonitoringSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Reveal Running App", action: #selector(revealRunningApp), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Copy Diagnostics", action: #selector(copyDiagnostics), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit EarthNaru", action: #selector(quit), keyEquivalent: "q"))
 
         statusItem?.menu = menu
@@ -187,7 +211,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent")!)
     }
 
+    @objc private func revealRunningApp() {
+        NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
+    }
+
+    @objc private func copyDiagnostics() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(diagnosticReport, forType: .string)
+    }
+
     @objc private func quit() {
         NSApp.terminate(nil)
+    }
+
+    private var diagnosticReport: String {
+        """
+        EarthNaruMac diagnostics
+        Key counter: \(keyboardMonitor.isRunning ? "On" : "Off")
+        Monitor: \(keyboardMonitor.activeMonitorSummary)
+        Permissions: \(keyboardMonitor.permissionSummary)
+        Last key: \(keyboardMonitor.lastEventSummary)
+        Monitor install: \(keyboardMonitor.installSummary)
+        Bundle id: \(keyboardMonitor.bundleIdentifier)
+        App path: \(keyboardMonitor.runningAppPath)
+        Executable: \(keyboardMonitor.executablePath)
+        """
     }
 }
