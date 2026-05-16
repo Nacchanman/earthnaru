@@ -42,22 +42,29 @@ final class KeyboardMonitor {
 
         installLocalMonitor()
 
-        guard Self.isAccessibilityTrusted(prompt: promptForPermission) else {
-            lastError = "Accessibility is off. Enable EarthNaruMac, then quit and relaunch the app."
-            return false
-        }
-
+        // Try HID before Accessibility. This is the best route for background typing,
+        // but macOS may require Privacy & Security -> Input Monitoring for the exact
+        // built app binary that is running.
         installHIDMonitor()
-        installEventTap()
-        installGlobalMonitor()
 
-        guard hidManager != nil || eventTap != nil || globalMonitor != nil else {
-            lastError = "Keyboard monitor could not start. Enable Accessibility and Input Monitoring for EarthNaruMac, then relaunch."
-            return false
+        let accessibilityTrusted = Self.isAccessibilityTrusted(prompt: promptForPermission)
+        if accessibilityTrusted {
+            installEventTap()
+            installGlobalMonitor()
         }
 
-        isRunning = true
-        return true
+        let hasBackgroundMonitor = hidManager != nil || eventTap != nil || globalMonitor != nil
+        if hasBackgroundMonitor {
+            isRunning = true
+            return true
+        }
+
+        if accessibilityTrusted {
+            lastError = "Background keyboard monitor could not start. Enable Input Monitoring for EarthNaruMac, then quit and relaunch."
+        } else {
+            lastError = "Background keyboard monitor is off. Enable Accessibility and Input Monitoring for EarthNaruMac, then quit and relaunch."
+        }
+        return false
     }
 
     func stop() {
