@@ -17,21 +17,35 @@ struct MascotView: View {
 
     var body: some View {
         let frame = runFrame % 4
-        let bob: CGFloat = isCelebrating ? -4 : [0, -3, 0, -2][frame]
+        let bob: CGFloat = isCelebrating ? -8 : [0, -7, -2, -5][frame]
+        let stomp: CGFloat = frame == 1 ? 4 : 0
+        let lean: CGFloat = [-2, 3, -1, 2][frame]
+        let squash: CGFloat = frame == 0 ? 0.96 : 1.0
+        let stretch: CGFloat = frame == 1 || isCelebrating ? 1.05 : 1.0
+        let armPump: CGFloat = frame == 1 || isCelebrating ? -8 : 0
+        let starPop: CGFloat = frame == 1 || isCelebrating ? 1.16 : 1.0
 
         ZStack(alignment: .topLeading) {
-            pixelLayer(rows: legRows(left: true), origin: CGPoint(x: leftLegOrigin.x, y: leftLegOrigin.y + bob))
-            pixelLayer(rows: legRows(left: false), origin: CGPoint(x: rightLegOrigin.x, y: rightLegOrigin.y + bob))
+            pixelLayer(rows: legRows(left: true), origin: CGPoint(x: leftLegOrigin.x - lean, y: leftLegOrigin.y + bob + stomp))
+            pixelLayer(rows: legRows(left: false), origin: CGPoint(x: rightLegOrigin.x - lean, y: rightLegOrigin.y + bob + (frame == 3 ? 3 : 0)))
 
-            pixelLayer(rows: leftArmRows, origin: CGPoint(x: leftArmOrigin.x, y: leftArmOrigin.y + bob))
-            pixelLayer(rows: rightArmRows, origin: CGPoint(x: rightArmOrigin.x, y: rightArmOrigin.y + bob))
+            pixelLayer(rows: leftArmRows(frame: frame), origin: CGPoint(x: leftArmOrigin.x + lean, y: leftArmOrigin.y + bob - armPump / 3))
+            pixelLayer(rows: rightArmRows(frame: frame), origin: CGPoint(x: rightArmOrigin.x + lean, y: rightArmOrigin.y + bob + armPump))
 
             pixelLayer(rows: earthRows, origin: CGPoint(x: earthOrigin.x, y: earthOrigin.y + bob))
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
+                .scaleEffect(x: squash, y: stretch, anchor: .bottom)
+                .offset(x: lean)
 
-            eyes(origin: CGPoint(x: earthOrigin.x + 55, y: earthOrigin.y + 42 + bob))
+            eyes(origin: CGPoint(x: earthOrigin.x + 55 + lean, y: earthOrigin.y + 42 + bob + (stretch > 1 ? -2 : 0)))
             pixelLayer(rows: starRows, origin: CGPoint(x: starOrigin.x, y: starOrigin.y + bob + (isCelebrating ? -3 : 0)))
-                .scaleEffect(isCelebrating ? 1.08 : 1, anchor: .center)
+                .scaleEffect(starPop, anchor: .center)
+                .offset(x: lean, y: armPump)
+
+            if frame == 1 || isCelebrating {
+                pixelLayer(rows: sparkRows, origin: CGPoint(x: starOrigin.x - 7, y: starOrigin.y + bob - 13 + armPump))
+                    .transition(.scale)
+            }
         }
         .frame(width: canvasSize.width, height: canvasSize.height, alignment: .topLeading)
         .clipped()
@@ -75,8 +89,19 @@ struct MascotView: View {
         ]
     }
 
-    private var leftArmRows: [String] {
-        [
+    private func leftArmRows(frame: Int) -> [String] {
+        frame == 1 || frame == 2
+        ? [
+            "...DD..",
+            "..DD...",
+            ".DD....",
+            "DD.....",
+            "DD.....",
+            ".DD....",
+            "..DDD..",
+            "...DDD."
+        ]
+        : [
             ".....DD",
             "....DD.",
             "...DD..",
@@ -88,8 +113,19 @@ struct MascotView: View {
         ]
     }
 
-    private var rightArmRows: [String] {
-        [
+    private func rightArmRows(frame: Int) -> [String] {
+        frame == 1 || isCelebrating
+        ? [
+            "...DD..",
+            "...DD..",
+            "..DD...",
+            "..DD...",
+            ".DD....",
+            ".DD....",
+            "DDD....",
+            "DD....."
+        ]
+        : [
             "....DD.",
             "....DD.",
             "...DD..",
@@ -110,6 +146,16 @@ struct MascotView: View {
             ".RRRRR.",
             "...R...",
             "...R..."
+        ]
+    }
+
+    private var sparkRows: [String] {
+        [
+            "Y...Y",
+            ".Y.Y.",
+            "..Y..",
+            ".Y.Y.",
+            "Y...Y"
         ]
     }
 
@@ -139,6 +185,7 @@ private enum MascotPalette {
     static let ocean = Color(red: 0.24, green: 0.55, blue: 0.91)
     static let land = Color(red: 0.56, green: 0.74, blue: 0.39)
     static let star = Color(red: 0.94, green: 0.22, blue: 0.16)
+    static let spark = Color(red: 1.0, green: 0.82, blue: 0.25)
 
     static func color(for symbol: Character) -> Color? {
         switch symbol {
@@ -147,6 +194,7 @@ private enum MascotPalette {
         case "G": land
         case "E": dark
         case "R": star
+        case "Y": spark
         default: nil
         }
     }
