@@ -1,0 +1,1 @@
+{"name":"earthnaru-pc-bridge","version":"0.1.0","private":true,"description":"Local keyboard-count WebSocket bridge for EarthNaru.","type":"module","scripts":{"start":"node index.js"},"dependencies":{"ws":"^8.18.0"},"engines":{"node":">=18"}}
