@@ -93,6 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Request Accessibility Permission", action: #selector(requestAccessibilityPermission), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Request Input Monitoring Permission", action: #selector(requestInputMonitoringPermission), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Open Accessibility Settings", action: #selector(openAccessibilitySettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Open Input Monitoring Settings", action: #selector(openInputMonitoringSettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit EarthNaru", action: #selector(quit), keyEquivalent: "q"))
@@ -131,6 +132,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func requestAccessibilityPermission() {
         keyboardMonitor.requestAccessibilityPermission()
+        startKeyboardMonitorIfAllowed(promptForPermission: false)
+    }
+
+    @objc private func requestInputMonitoringPermission() {
+        keyboardMonitor.requestInputMonitoringPermission()
         startKeyboardMonitorIfAllowed(promptForPermission: false)
     }
 

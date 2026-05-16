@@ -31,24 +31,40 @@ final class KeyboardMonitor {
         return AXIsProcessTrustedWithOptions(options)
     }
 
+    static func isInputMonitoringTrusted(prompt: Bool) -> Bool {
+        if prompt {
+            return CGRequestListenEventAccess()
+        }
+
+        return CGPreflightListenEventAccess()
+    }
+
     func requestAccessibilityPermission() {
         _ = Self.isAccessibilityTrusted(prompt: true)
     }
 
+    func requestInputMonitoringPermission() {
+        _ = Self.isInputMonitoringTrusted(prompt: true)
+    }
+
     @discardableResult
     func start(promptForPermission: Bool = false) -> Bool {
-        guard !isRunning else { return true }
         lastError = nil
 
         installLocalMonitor()
 
-        // Try HID before Accessibility. This is the best route for background typing,
-        // but macOS may require Privacy & Security -> Input Monitoring for the exact
-        // built app binary that is running.
-        installHIDMonitor()
-
+        let inputMonitoringTrusted = Self.isInputMonitoringTrusted(prompt: promptForPermission)
         let accessibilityTrusted = Self.isAccessibilityTrusted(prompt: promptForPermission)
-        if accessibilityTrusted {
+        let canListenInBackground = inputMonitoringTrusted || accessibilityTrusted
+
+        if inputMonitoringTrusted {
+            // HID receives physical key down values from other apps without reading
+            // or retaining the typed characters themselves. It is a useful fallback,
+            // but the Core Graphics tap below is the primary path for Input Monitoring.
+            installHIDMonitor()
+        }
+
+        if canListenInBackground {
             installEventTap()
             installGlobalMonitor()
         }
@@ -59,9 +75,16 @@ final class KeyboardMonitor {
             return true
         }
 
-        if accessibilityTrusted {
-            lastError = "Background keyboard monitor could not start. Enable Input Monitoring for EarthNaruMac, then quit and relaunch."
-        } else {
+        isRunning = false
+
+        switch (accessibilityTrusted, inputMonitoringTrusted) {
+        case (true, true):
+            lastError = "Background keyboard monitor could not start. Quit and relaunch EarthNaruMac, then try Restart Key Counter."
+        case (true, false):
+            lastError = "Background keyboard monitor is off. Enable Input Monitoring for EarthNaruMac, then quit and relaunch."
+        case (false, true):
+            lastError = "Background keyboard monitor is off. Enable Accessibility for EarthNaruMac, then quit and relaunch."
+        case (false, false):
             lastError = "Background keyboard monitor is off. Enable Accessibility and Input Monitoring for EarthNaruMac, then quit and relaunch."
         }
         return false
@@ -154,11 +177,29 @@ final class KeyboardMonitor {
     private func installEventTap() {
         guard eventTap == nil else { return }
 
+        // Input Monitoring grants Core Graphics listen access. Try the HID tap first,
+        // then fall back to the session tap because some user configurations allow the
+        // session-level tap even when IOHID callbacks do not fire for background apps.
+        guard let tap = makeEventTap(location: .cghidEventTap) ?? makeEventTap(location: .cgSessionEventTap) else {
+            return
+        }
+
+        eventTap = tap
+        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+
+        if let runLoopSource {
+            CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
+        }
+
+        CGEvent.tapEnable(tap: tap, enable: true)
+    }
+
+    private func makeEventTap(location: CGEventTapLocation) -> CFMachPort? {
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue)
         let userInfo = Unmanaged.passUnretained(self).toOpaque()
 
-        guard let tap = CGEvent.tapCreate(
-            tap: .cghidEventTap,
+        return CGEvent.tapCreate(
+            tap: location,
             place: .headInsertEventTap,
             options: .listenOnly,
             eventsOfInterest: mask,
@@ -184,18 +225,7 @@ final class KeyboardMonitor {
                 return Unmanaged.passUnretained(event)
             },
             userInfo: userInfo
-        ) else {
-            return
-        }
-
-        eventTap = tap
-        runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-
-        if let runLoopSource {
-            CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
-        }
-
-        CGEvent.tapEnable(tap: tap, enable: true)
+        )
     }
 
     private func handleKeyEvent(isRepeat: Bool) {
