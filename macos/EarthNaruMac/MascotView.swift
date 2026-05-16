@@ -3,60 +3,60 @@ import SwiftUI
 struct MascotView: View {
     let object: LiftObject
     let isCelebrating: Bool
+    let runFrame: Int
+
+    private let pixel: CGFloat = 5
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            let pump = sin(t * 7) * 3
-            let bodyBounce = CGFloat(pump / 3)
+        let frame = runFrame % 4
+        let bob: CGFloat = [0, -3, 0, -2][frame]
+
+        ZStack {
+            trophyObject
+                .offset(x: 56, y: 55)
+                .opacity(isCelebrating ? 0.12 : 1)
 
             ZStack {
-                trophyObject
-                    .offset(x: 67, y: 62)
-                    .opacity(isCelebrating ? 0.12 : 1)
+                legs(frame: frame)
+                    .offset(x: 0, y: 56 + bob)
 
-                ZStack {
-                    leftArm(pump: CGFloat(pump))
-                        .offset(x: -87, y: 28)
+                leftArm(frame: frame)
+                    .offset(x: -52, y: 6 + bob)
 
-                    rightArm(pump: CGFloat(pump), isCelebrating: isCelebrating)
-                        .offset(x: isCelebrating ? 75 : 82, y: isCelebrating ? -25 : 12)
+                rightArm(frame: frame, isCelebrating: isCelebrating)
+                    .offset(x: isCelebrating ? 49 : 54, y: isCelebrating ? -30 : 3 + bob)
 
-                    legs(pump: CGFloat(pump))
-                        .offset(y: 94)
+                pixelEarth
+                    .offset(y: bob)
 
-                    pixelEarth
-                        .offset(y: bodyBounce)
+                eyes
+                    .offset(y: bob)
 
-                    eyes
-                        .offset(y: bodyBounce)
-
-                    if isCelebrating {
-                        Text(object.emoji)
-                            .font(.system(size: 34))
-                            .offset(x: 83, y: -82)
-                            .transition(.scale)
-                    }
+                if isCelebrating {
+                    Text(object.emoji)
+                        .font(.system(size: 30))
+                        .offset(x: 65, y: -80)
+                        .transition(.scale)
                 }
-                .frame(width: 180, height: 190)
-                .offset(y: 6)
             }
-            .frame(width: 180, height: 215)
-            .animation(.spring(response: 0.34, dampingFraction: 0.68), value: isCelebrating)
+            .frame(width: 154, height: 178)
         }
+        .frame(width: 154, height: 178)
+        .animation(.spring(response: 0.18, dampingFraction: 0.78), value: runFrame)
+        .animation(.spring(response: 0.34, dampingFraction: 0.68), value: isCelebrating)
     }
 
     private var trophyObject: some View {
         VStack(spacing: 1) {
             Text(object.emoji)
-                .font(.system(size: 26))
+                .font(.system(size: 22))
             Text("Lv.\(object.level)")
                 .font(.system(size: 8, weight: .bold, design: .rounded))
                 .foregroundStyle(.secondary)
         }
-        .padding(5)
+        .padding(4)
         .background(.white.opacity(0.55))
-        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     private var pixelEarth: some View {
@@ -81,116 +81,125 @@ struct MascotView: View {
                 ".....DDDBBBBBDD......",
                 ".......DDDDDDD......."
             ],
-            pixelSize: 7
+            pixelSize: pixel
         )
-        .shadow(color: .black.opacity(0.16), radius: 0, x: 4, y: 4)
+        .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
     }
 
     private var eyes: some View {
-        HStack(spacing: 31) {
-            PixelBlock(width: 2, height: 7, pixelSize: 6, color: MascotPalette.dark)
-            PixelBlock(width: 2, height: 7, pixelSize: 6, color: MascotPalette.dark)
+        HStack(spacing: 23) {
+            PixelBlock(width: 2, height: 6, pixelSize: 4, color: MascotPalette.dark)
+            PixelBlock(width: 2, height: 6, pixelSize: 4, color: MascotPalette.dark)
         }
-        .offset(y: -7)
+        .offset(y: -4)
     }
 
-    private func leftArm(pump: CGFloat) -> some View {
+    private func leftArm(frame: Int) -> some View {
+        let rows: [String] = frame.isMultiple(of: 2)
+        ? [
+            ".....DD",
+            "....DD.",
+            "...DD..",
+            "..DD...",
+            ".DD....",
+            "DD.....",
+            "DD.....",
+            ".DDD...",
+            "..DDD.."
+        ]
+        : [
+            "....DD.",
+            "...DD..",
+            "..DD...",
+            ".DD....",
+            ".DD....",
+            "..DD...",
+            "...DD..",
+            "...DDD.",
+            "....DDD"
+        ]
+
+        return PixelMap(rows: rows, pixelSize: pixel)
+    }
+
+    private func rightArm(frame: Int, isCelebrating: Bool) -> some View {
+        if isCelebrating {
+            return PixelMap(
+                rows: [
+                    "....DD.",
+                    "...DD..",
+                    "..DD...",
+                    ".DD....",
+                    ".DD....",
+                    "DD.....",
+                    "DD.....",
+                    "DD.....",
+                    ".DD...."
+                ],
+                pixelSize: pixel
+            )
+        }
+
+        let rows: [String] = frame.isMultiple(of: 2)
+        ? [
+            "DD.....",
+            ".DD....",
+            "..DD...",
+            "...DD..",
+            "....DD.",
+            ".....DD",
+            ".....DD",
+            "...DDD.",
+            "..DDD.."
+        ]
+        : [
+            "....DD.",
+            "...DD..",
+            "..DD...",
+            ".DD....",
+            ".DD....",
+            "..DD...",
+            "...DD..",
+            "...DDD.",
+            "....DDD"
+        ]
+
+        return PixelMap(rows: rows, pixelSize: pixel)
+    }
+
+    private func legs(frame: Int) -> some View {
+        let leftForward = frame == 0 || frame == 1
+
+        return HStack(spacing: 18) {
+            leg(forward: leftForward)
+                .offset(y: leftForward ? 0 : -2)
+            leg(forward: !leftForward)
+                .scaleEffect(x: -1, y: 1)
+                .offset(y: leftForward ? -2 : 0)
+        }
+    }
+
+    private func leg(forward: Bool) -> some View {
         PixelMap(
-            rows: [
-                ".....DDD..",
-                "....DDD...",
-                "....DD....",
-                "...DDD....",
-                "...DD.....",
-                "..DDD.....",
-                "..DD......",
-                ".DDD......",
-                ".DD.......",
-                "DDD.......",
-                "DDD.......",
-                ".DDDDD....",
-                "..DDDDD...",
-                "....DDD..."
+            rows: forward
+            ? [
+                "..DD.",
+                "..DD.",
+                ".DD..",
+                ".DD..",
+                "DDDDD",
+                "DDDDD"
+            ]
+            : [
+                ".DD..",
+                ".DD..",
+                "..DD.",
+                "..DD.",
+                ".DDDD",
+                ".DDDD"
             ],
-            pixelSize: 5
+            pixelSize: pixel
         )
-        .offset(y: pump)
-    }
-
-    private func rightArm(pump: CGFloat, isCelebrating: Bool) -> some View {
-        Group {
-            if isCelebrating {
-                PixelMap(
-                    rows: [
-                        "......DDD..",
-                        ".....DDDD..",
-                        ".....DDD...",
-                        "....DDD....",
-                        "....DD.....",
-                        "...DDD.....",
-                        "..DDD......",
-                        "..DD.......",
-                        ".DDD.......",
-                        ".DD........",
-                        "DDD........",
-                        "DD........."
-                    ],
-                    pixelSize: 5
-                )
-            } else {
-                PixelMap(
-                    rows: [
-                        "DD........",
-                        "DDD.......",
-                        ".DDD......",
-                        "..DDD.....",
-                        "...DDD....",
-                        "....DDD...",
-                        ".....DD...",
-                        ".....DDD..",
-                        "......DDD.",
-                        "......DDDD",
-                        ".......DDD",
-                        ".......DD."
-                    ],
-                    pixelSize: 5
-                )
-                .offset(y: -pump)
-            }
-        }
-    }
-
-    private func legs(pump: CGFloat) -> some View {
-        HStack(spacing: 30) {
-            PixelMap(
-                rows: [
-                    "..DD..",
-                    "..DD..",
-                    "..DD..",
-                    "..DD..",
-                    "..DD..",
-                    "DDDDDD",
-                    "DDDDDD"
-                ],
-                pixelSize: 5
-            )
-            .offset(x: -3, y: max(0, pump / 2))
-
-            PixelMap(
-                rows: [
-                    "..DD..",
-                    "..DD..",
-                    "..DD..",
-                    "..DD..",
-                    "..DD..",
-                    "DDDDDD",
-                    "DDDDDD"
-                ],
-                pixelSize: 5
-            )
-            .scaleEffect(x: -1, y: 1)
-            .offset(x: 3, y: max(0, -pump / 2))
-        }
     }
 }
 
@@ -262,5 +271,5 @@ private struct PixelBlock: View {
 }
 
 #Preview {
-    MascotView(object: LiftObject(level: 5, name: "Keyboard", emoji: "⌨️"), isCelebrating: true)
+    MascotView(object: LiftObject(level: 5, name: "Keyboard", emoji: "⌨️"), isCelebrating: true, runFrame: 1)
 }
