@@ -34,15 +34,17 @@ final class KeyboardMonitor {
     }
 
     var diagnosticSummary: String {
+        "\(activeMonitorSummary); \(permissionSummary); \(lastEventSummary); \(installSummary); \(appIdentitySummary)"
+    }
+
+    var permissionSummary: String {
         let accessibility = accessibilityTrusted ? "AX ok" : "AX off"
         let input = inputMonitoringTrusted ? "Input ok" : "Input off"
         let secure = secureEventInputEnabled ? "Secure Input ON" : "Secure Input off"
-        let last = lastEventSummary
-        let notes = installNotes.isEmpty ? "" : "; \(installNotes.joined(separator: ", "))"
-        return "\(activeMonitorSummary); \(accessibility); \(input); \(secure); \(last)\(notes)"
+        return "\(accessibility); \(input); \(secure)"
     }
 
-    private var lastEventSummary: String {
+    var lastEventSummary: String {
         guard let lastEventSource else { return "no keys yet" }
 
         if let lastEventAge {
@@ -50,6 +52,30 @@ final class KeyboardMonitor {
         }
 
         return "last \(lastEventSource) #\(totalEventsSeen)"
+    }
+
+    var installSummary: String {
+        installNotes.isEmpty ? "Install ok" : installNotes.joined(separator: ", ")
+    }
+
+    var appIdentitySummary: String {
+        "bundle \(bundleIdentifier); app \(runningAppPath)"
+    }
+
+    var runningAppPath: String {
+        Bundle.main.bundleURL.path
+    }
+
+    var executablePath: String {
+        Bundle.main.executableURL?.path ?? "unknown executable"
+    }
+
+    var bundleIdentifier: String {
+        Bundle.main.bundleIdentifier ?? "unknown bundle id"
+    }
+
+    var likelyPermissionTargetMismatch: Bool {
+        isRunning && (!accessibilityTrusted || !inputMonitoringTrusted)
     }
 
     static func isAccessibilityTrusted(prompt: Bool) -> Bool {
