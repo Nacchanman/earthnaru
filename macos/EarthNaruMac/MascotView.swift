@@ -11,17 +11,18 @@ struct MascotView: View {
         let frame = isCelebrating ? 4 : runFrame % 4
 
         ZStack {
-            trophyObject
-                .offset(x: 52, y: 58)
-                .opacity(isCelebrating ? 0.12 : 1)
-
             PixelMap(rows: spriteRows(frame: frame), pixelSize: pixel)
                 .shadow(color: .black.opacity(0.16), radius: 0, x: 3, y: 3)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+
+            trophyObject
+                .offset(x: 46, y: 56)
+                .opacity(isCelebrating ? 0.12 : 1)
 
             if isCelebrating {
                 Text(object.emoji)
                     .font(.system(size: 28))
-                    .offset(x: 58, y: -78)
+                    .offset(x: 52, y: -76)
                     .transition(.scale)
             }
         }
@@ -202,27 +203,63 @@ private struct PixelMap: View {
     let rows: [String]
     let pixelSize: CGFloat
 
-    private var maxColumns: Int {
-        rows.map { $0.count }.max() ?? 0
+    private var trimmedPixels: [(row: Int, column: Int, color: Color)] {
+        let matrix = rows.map { Array($0) }
+        var minRow = Int.max
+        var maxRow = Int.min
+        var minColumn = Int.max
+        var maxColumn = Int.min
+        var rawPixels: [(row: Int, column: Int, color: Color)] = []
+
+        for (rowIndex, row) in matrix.enumerated() {
+            for (columnIndex, symbol) in row.enumerated() {
+                guard let color = MascotPalette.color(for: symbol) else { continue }
+                rawPixels.append((rowIndex, columnIndex, color))
+                minRow = min(minRow, rowIndex)
+                maxRow = max(maxRow, rowIndex)
+                minColumn = min(minColumn, columnIndex)
+                maxColumn = max(maxColumn, columnIndex)
+            }
+        }
+
+        guard minRow != Int.max else { return [] }
+
+        return rawPixels.map { pixel in
+            (
+                row: pixel.row - minRow,
+                column: pixel.column - minColumn,
+                color: pixel.color
+            )
+        }
+    }
+
+    private var dimensions: (columns: Int, rows: Int) {
+        let pixels = trimmedPixels
+        let columns = (pixels.map(\.column).max() ?? 0) + 1
+        let rows = (pixels.map(\.row).max() ?? 0) + 1
+        return (columns, rows)
     }
 
     var body: some View {
+        let pixels = trimmedPixels
+        let dimensions = dimensions
+
         ZStack(alignment: .topLeading) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
-                ForEach(Array(Array(row).enumerated()), id: \.offset) { columnIndex, symbol in
-                    if let color = MascotPalette.color(for: symbol) {
-                        Rectangle()
-                            .fill(color)
-                            .frame(width: pixelSize, height: pixelSize)
-                            .offset(
-                                x: CGFloat(columnIndex) * pixelSize,
-                                y: CGFloat(rowIndex) * pixelSize
-                            )
-                    }
-                }
+            ForEach(Array(pixels.enumerated()), id: \.offset) { _, pixel in
+                Rectangle()
+                    .fill(pixel.color)
+                    .frame(width: pixelSize, height: pixelSize)
+                    .offset(
+                        x: CGFloat(pixel.column) * pixelSize,
+                        y: CGFloat(pixel.row) * pixelSize
+                    )
             }
         }
-        .frame(width: CGFloat(maxColumns) * pixelSize, height: CGFloat(rows.count) * pixelSize, alignment: .center)
+        .frame(
+            width: CGFloat(dimensions.columns) * pixelSize,
+            height: CGFloat(dimensions.rows) * pixelSize,
+            alignment: .center
+        )
     }
 }
 
