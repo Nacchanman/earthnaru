@@ -8,14 +8,11 @@ struct MascotView: View {
     private let pixel: CGFloat = 5
     private let canvasSize = CGSize(width: 154, height: 178)
 
-    // The full running silhouette is intentionally centered inside the 154 × 178
-    // mascot area. Arms and feet slightly overlap the globe so every limb reads as
-    // attached while keeping the visual center close to the middle of the panel.
-    private let earthOrigin = CGPoint(x: 25, y: 31)
-    private let leftArmOrigin = CGPoint(x: 7, y: 65)
-    private let rightArmOrigin = CGPoint(x: 112, y: 65)
-    private let leftLegOrigin = CGPoint(x: 48, y: 117)
-    private let rightLegOrigin = CGPoint(x: 86, y: 117)
+    private let earthOrigin = CGPoint(x: 25, y: 44)
+    private let leftArmOrigin = CGPoint(x: 16, y: 76)
+    private let rightArmOrigin = CGPoint(x: 112, y: 76)
+    private let leftLegOrigin = CGPoint(x: 52, y: 130)
+    private let rightLegOrigin = CGPoint(x: 90, y: 130)
 
     var body: some View {
         let frame = runFrame % 4
@@ -36,7 +33,7 @@ struct MascotView: View {
             if isCelebrating {
                 Text(object.emoji)
                     .font(.system(size: 28))
-                    .position(x: 130, y: 18)
+                    .position(x: 130, y: 24)
                     .transition(.scale)
             }
         }
@@ -85,75 +82,80 @@ struct MascotView: View {
     private func leftArmRows(frame: Int) -> [String] {
         if frame == 0 || frame == 1 {
             return [
-                "....DDD",
-                "...DDD.",
-                "..DDD..",
-                ".DDD...",
-                ".DDD...",
-                "..DD..."
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DDD.."
             ]
         }
 
         return [
-            "..DDD..",
-            ".DDD...",
-            ".DDD...",
-            "..DDD..",
-            "...DDD.",
-            "....DDD"
+            "DD....",
+            ".DD...",
+            "..DD..",
+            "...DD.",
+            "....DD",
+            "....DD",
+            "..DDD."
         ]
     }
 
     private func rightArmRows(frame: Int, isCelebrating: Bool) -> [String] {
         if isCelebrating {
             return [
-                "DDD....",
-                ".DDD...",
-                "..DDD..",
-                "...DDD.",
-                "...DDD.",
-                "...DD.."
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DDD.."
             ]
         }
 
         if frame == 0 || frame == 1 {
             return [
-                "..DDD..",
-                "...DDD.",
-                "...DDD.",
-                "..DDD..",
-                ".DDD...",
-                "DDD...."
+                "DD....",
+                ".DD...",
+                "..DD..",
+                "...DD.",
+                "....DD",
+                "....DD",
+                "..DDD."
             ]
         }
 
         return [
-            "DDD....",
-            ".DDD...",
-            "..DDD..",
-            "...DDD.",
-            "...DDD.",
-            "...DD.."
+            "....DD",
+            "...DD.",
+            "..DD..",
+            ".DD...",
+            "DD....",
+            "DD....",
+            ".DDD.."
         ]
     }
 
     private func legRows(forward: Bool) -> [String] {
         forward
         ? [
-            ".DD..",
-            ".DD..",
             "..DD.",
             "..DD.",
-            "..DDD",
-            ".DDDD"
+            ".DD..",
+            ".DD..",
+            "DDDD.",
+            "DDDD."
         ]
         : [
-            "..DD.",
-            "..DD.",
             ".DD..",
             ".DD..",
-            "DDD..",
-            "DDDD."
+            "..DD.",
+            "..DD.",
+            ".DDDD",
+            ".DDDD"
         ]
     }
 }
