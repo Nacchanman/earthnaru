@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct LiftObject: Identifiable, Equatable {
     let id = UUID()
