@@ -32,15 +32,15 @@ final class KeyboardMonitor {
         installLocalMonitor()
 
         guard Self.isAccessibilityTrusted(prompt: promptForPermission) else {
-            lastError = "Accessibility permission is off. Enable EarthNaruMac in System Settings, then choose Restart Key Counter."
+            lastError = "Accessibility is off. Enable EarthNaruMac, then restart the app."
             return false
         }
 
-        installGlobalMonitor()
         installEventTap()
+        installGlobalMonitor()
 
-        guard globalMonitor != nil || eventTap != nil else {
-            lastError = "Keyboard monitor could not start. Quit EarthNaruMac, open it again, then choose Restart Key Counter."
+        guard eventTap != nil || globalMonitor != nil else {
+            lastError = "Keyboard monitor could not start. Quit EarthNaruMac, relaunch it from Xcode, then choose Restart Key Counter."
             return false
         }
 
@@ -97,7 +97,7 @@ final class KeyboardMonitor {
         let userInfo = Unmanaged.passUnretained(self).toOpaque()
 
         guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
+            tap: .cghidEventTap,
             place: .headInsertEventTap,
             options: .listenOnly,
             eventsOfInterest: mask,
@@ -106,8 +106,9 @@ final class KeyboardMonitor {
                     return Unmanaged.passUnretained(event)
                 }
 
+                let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(userInfo).takeUnretainedValue()
+
                 if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                    let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(userInfo).takeUnretainedValue()
                     if let eventTap = monitor.eventTap {
                         CGEvent.tapEnable(tap: eventTap, enable: true)
                     }
@@ -118,9 +119,7 @@ final class KeyboardMonitor {
                     return Unmanaged.passUnretained(event)
                 }
 
-                let monitor = Unmanaged<KeyboardMonitor>.fromOpaque(userInfo).takeUnretainedValue()
                 monitor.handleKeyEvent(isRepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0)
-
                 return Unmanaged.passUnretained(event)
             },
             userInfo: userInfo
@@ -141,8 +140,6 @@ final class KeyboardMonitor {
     private func handleKeyEvent(isRepeat: Bool) {
         guard !isRepeat else { return }
 
-        // NSEvent global monitor and CGEvent tap can both fire for the same physical key.
-        // Keep whichever arrives first and ignore near-duplicates.
         let now = ProcessInfo.processInfo.systemUptime
         guard now - lastEventTime > 0.015 else { return }
         lastEventTime = now
