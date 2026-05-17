@@ -20,14 +20,14 @@ enum CompanionCorner: String, CaseIterable {
 final class CompanionWindowController {
     private let window: NSWindow
     private var corner: CompanionCorner = .bottomRight
-    private let windowSize = NSSize(width: 278, height: 392)
+    private let windowSize = NSSize(width: 172, height: 214)
 
     var isVisible: Bool {
         window.isVisible
     }
 
-    init(game: GameModel) {
-        let contentView = CompanionView(game: game)
+    init() {
+        let contentView = CompanionView()
         let hostingView = NSHostingView(rootView: contentView)
 
         window = NSWindow(

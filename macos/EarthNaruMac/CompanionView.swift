@@ -1,229 +1,131 @@
 import SwiftUI
 
 struct CompanionView: View {
-    @ObservedObject var game: GameModel
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
 
     var body: some View {
-        VStack(spacing: 10) {
-            header
-            stage
-            todayPanel
-            levelPanel
-        }
-        .padding(14)
-        .frame(width: 278, height: 392)
-        .background(panelBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(.white.opacity(0.34), lineWidth: 1)
-        )
-    }
+        TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
+            let mood = TimeMood(date: context.date)
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("EarthNaru")
-                    .font(.system(size: 18, weight: .black, design: .rounded))
-                Text(game.isPaused ? "Paused" : game.activityPace.title)
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(game.isPaused ? .orange : game.activityPace.color)
+            VStack(spacing: 6) {
+                MascotView(date: context.date, mood: mood)
+                    .frame(width: 138, height: 156)
+
+                Text(Self.timeFormatter.string(from: context.date))
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(mood.textColor)
+                    .contentTransition(.numericText())
             }
-
-            Spacer()
-
-            HStack(spacing: 5) {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 11, weight: .bold))
-                Text("\(game.todayKeys)")
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-            }
-            .foregroundStyle(game.activityPace.color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(game.activityPace.color.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        }
-    }
-
-    private var stage: some View {
-        ZStack(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.80, green: 0.91, blue: 0.98),
-                            Color(red: 0.86, green: 0.93, blue: 0.82),
-                            Color(red: 0.98, green: 0.90, blue: 0.70)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-
-            VStack(spacing: 0) {
-                HStack {
-                    levelBadge
-                    Spacer()
-                    liftBadge
-                }
-                .padding(10)
-
-                Spacer(minLength: 0)
-
-                MascotView(
-                    object: game.currentObject,
-                    isCelebrating: game.isCelebrating,
-                    runFrame: game.runFrame
-                )
-                .frame(width: 154, height: 178)
-                .scaleEffect(0.86)
-                .offset(y: 8)
-            }
-        }
-        .frame(height: 190)
-    }
-
-    private var todayPanel: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                MetricLabel(icon: "keyboard", title: "Today", value: "\(game.todayKeys)")
-                Spacer()
-                Text("\(game.todayGoal) goal")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-            }
-
-            MeterBar(value: game.todayProgress, color: game.activityPace.color)
-
-            Text(game.isPaused ? "Counting is paused." : game.activityPace.caption)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-        }
-        .padding(10)
-        .background(.white.opacity(0.50))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private var levelPanel: some View {
-        HStack(spacing: 8) {
-            MetricTile(icon: "sum", title: "Total", value: "\(game.totalKeys)")
-            MetricTile(icon: "arrow.up.forward", title: "Next", value: game.nextRequiredKeys == nil ? "Max" : "\(game.keysToNextLevel)")
-            MetricTile(icon: "trophy.fill", title: "Lift", value: game.currentObject.name)
-        }
-    }
-
-    private var levelBadge: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "bolt.fill")
-                .font(.system(size: 10, weight: .black))
-            Text("Lv.\(game.level)")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-        }
-        .foregroundStyle(.white)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(Color(red: 0.08, green: 0.22, blue: 0.36).opacity(0.88))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private var liftBadge: some View {
-        HStack(spacing: 4) {
-            Text(game.currentObject.emoji)
-                .font(.system(size: 14))
-            Text(game.currentObject.name)
-                .font(.system(size: 11, weight: .bold, design: .rounded))
-                .lineLimit(1)
-        }
-        .foregroundStyle(Color(red: 0.08, green: 0.22, blue: 0.36))
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(.white.opacity(0.72))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-    }
-
-    private var panelBackground: some ShapeStyle {
-        LinearGradient(
-            colors: [
-                Color(red: 0.97, green: 0.98, blue: 0.95).opacity(0.92),
-                Color(red: 0.91, green: 0.96, blue: 0.98).opacity(0.92)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-}
-
-private struct MetricLabel: View {
-    let icon: String
-    let title: String
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 7) {
-            Image(systemName: icon)
-                .font(.system(size: 12, weight: .bold))
-                .frame(width: 18, height: 18)
-                .foregroundStyle(Color(red: 0.14, green: 0.42, blue: 0.57))
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
-                Text(value)
-                    .font(.system(size: 17, weight: .black, design: .rounded))
-            }
+            .padding(.top, 10)
+            .padding(.horizontal, 10)
+            .padding(.bottom, 9)
+            .frame(width: 172, height: 214)
+            .background(mood.background)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(.white.opacity(mood.borderOpacity), lineWidth: 1)
+            )
         }
     }
 }
 
-private struct MetricTile: View {
-    let icon: String
-    let title: String
-    let value: String
+enum TimeMood {
+    case dawn
+    case morning
+    case noon
+    case afternoon
+    case evening
+    case night
+    case lateNight
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Image(systemName: icon)
-                .font(.system(size: 11, weight: .black))
-                .foregroundStyle(Color(red: 0.12, green: 0.35, blue: 0.52))
+    init(date: Date, calendar: Calendar = .current) {
+        let hour = calendar.component(.hour, from: date)
 
-            Text(title)
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-                .foregroundStyle(.secondary)
-
-            Text(value)
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
+        switch hour {
+        case 5..<8:
+            self = .dawn
+        case 8..<11:
+            self = .morning
+        case 11..<14:
+            self = .noon
+        case 14..<18:
+            self = .afternoon
+        case 18..<22:
+            self = .evening
+        case 22..<24:
+            self = .night
+        default:
+            self = .lateNight
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(9)
-        .background(.white.opacity(0.48))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
-}
 
-private struct MeterBar: View {
-    let value: Double
-    let color: Color
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(.black.opacity(0.08))
-
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(color)
-                    .frame(width: max(8, proxy.size.width * value))
-            }
+    var textColor: Color {
+        switch self {
+        case .dawn: return Color(red: 0.35, green: 0.24, blue: 0.42)
+        case .morning: return Color(red: 0.08, green: 0.28, blue: 0.42)
+        case .noon: return Color(red: 0.10, green: 0.32, blue: 0.22)
+        case .afternoon: return Color(red: 0.09, green: 0.27, blue: 0.43)
+        case .evening: return Color(red: 0.34, green: 0.18, blue: 0.36)
+        case .night: return Color(red: 0.78, green: 0.85, blue: 1.00)
+        case .lateNight: return Color(red: 0.70, green: 0.82, blue: 1.00)
         }
-        .frame(height: 8)
     }
-}
 
-#Preview {
-    CompanionView(game: GameModel())
+    var borderOpacity: Double {
+        switch self {
+        case .night, .lateNight: return 0.16
+        default: return 0.36
+        }
+    }
+
+    var background: some ShapeStyle {
+        LinearGradient(colors: backgroundColors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    private var backgroundColors: [Color] {
+        switch self {
+        case .dawn:
+            return [
+                Color(red: 0.98, green: 0.76, blue: 0.62).opacity(0.92),
+                Color(red: 0.82, green: 0.88, blue: 0.98).opacity(0.92)
+            ]
+        case .morning:
+            return [
+                Color(red: 0.76, green: 0.91, blue: 0.98).opacity(0.93),
+                Color(red: 0.89, green: 0.96, blue: 0.78).opacity(0.93)
+            ]
+        case .noon:
+            return [
+                Color(red: 0.62, green: 0.86, blue: 1.00).opacity(0.93),
+                Color(red: 0.98, green: 0.92, blue: 0.62).opacity(0.93)
+            ]
+        case .afternoon:
+            return [
+                Color(red: 0.80, green: 0.91, blue: 1.00).opacity(0.93),
+                Color(red: 0.74, green: 0.93, blue: 0.83).opacity(0.93)
+            ]
+        case .evening:
+            return [
+                Color(red: 0.96, green: 0.58, blue: 0.47).opacity(0.92),
+                Color(red: 0.45, green: 0.46, blue: 0.84).opacity(0.92)
+            ]
+        case .night:
+            return [
+                Color(red: 0.09, green: 0.12, blue: 0.27).opacity(0.94),
+                Color(red: 0.16, green: 0.24, blue: 0.44).opacity(0.94)
+            ]
+        case .lateNight:
+            return [
+                Color(red: 0.04, green: 0.07, blue: 0.17).opacity(0.95),
+                Color(red: 0.13, green: 0.16, blue: 0.34).opacity(0.95)
+            ]
+        }
+    }
 }
