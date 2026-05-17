@@ -648,11 +648,11 @@ private struct MascotPose {
         case .sleep:
             return ["..", "DD"]
         case .dream:
-            return [".D", "D.", ".D", "D."]
+            return [".D", "D.", ".D"]
         case .wave where pulse(center: 0.62, width: 0.08) > 0.7:
             return ["DD"]
         default:
-            return ["DD", "DD", "DD", "DD", "DD"]
+            return ["DD", "DD", "DD", "DD"]
         }
     }
 
@@ -705,7 +705,6 @@ private struct MascotPose {
             "...DDD",
             "..DD..",
             ".DD...",
-            "DD....",
             "DD...."
         ]
     }
@@ -716,7 +715,6 @@ private struct MascotPose {
             "DDD...",
             "..DD..",
             "...DD.",
-            "....DD",
             "....DD",
             "...DD."
         ]
@@ -754,7 +752,6 @@ private struct MascotPose {
                 "..DD..",
                 ".DD...",
                 "DD....",
-                "DD....",
                 ".DD..."
             ]
         case .wave:
@@ -765,7 +762,6 @@ private struct MascotPose {
                     "...DD.",
                     "..DD..",
                     ".DD..",
-                    "DD...",
                     "DD..."
                 ]
             case 1:
@@ -773,7 +769,6 @@ private struct MascotPose {
                     "...DD.",
                     "..DD..",
                     ".DD...",
-                    "DD....",
                     "DDD...",
                     "..DD.."
                 ]
@@ -783,7 +778,6 @@ private struct MascotPose {
                     ".DD...",
                     "DD....",
                     "DDD...",
-                    "..DD..",
                     "...DD."
                 ]
             case 3:
@@ -791,7 +785,6 @@ private struct MascotPose {
                     "...DD.",
                     "..DD..",
                     "DDD...",
-                    "D.D...",
                     ".DDD..",
                     "...DD."
                 ]
@@ -805,7 +798,6 @@ private struct MascotPose {
                     "...DDD",
                     "..DD..",
                     ".DDD..",
-                    "D.D...",
                     "DDD..."
                 ]
                 : [
@@ -813,14 +805,12 @@ private struct MascotPose {
                     "..DD..",
                     "DDD...",
                     "D.D...",
-                    ".DDD..",
                     "..DD.."
                 ]
         case .sleep:
             return [
                 "...DD",
                 "..DDD",
-                ".DD..",
                 ".DD..",
                 "..DD."
             ]
@@ -829,7 +819,6 @@ private struct MascotPose {
                 "...DD.",
                 "..DDD.",
                 ".DD...",
-                ".DDD..",
                 "..DD.."
             ]
         case .bounce:
@@ -837,7 +826,6 @@ private struct MascotPose {
                 "...DD",
                 "..DDD",
                 ".DD..",
-                "DDD..",
                 "DD..."
             ]
         default:
@@ -859,7 +847,6 @@ private struct MascotPose {
                     ".DD...",
                     "..DD..",
                     "...DD.",
-                    "....DD",
                     "....DD"
                 ]
             case 1:
@@ -867,7 +854,6 @@ private struct MascotPose {
                     ".DD...",
                     "..DD..",
                     "...DD.",
-                    "....DD",
                     "...DDD",
                     "..DD.."
                 ]
@@ -877,7 +863,6 @@ private struct MascotPose {
                     "...DD.",
                     "....DD",
                     "...DDD",
-                    "..DD..",
                     ".DD..."
                 ]
             case 3:
@@ -885,7 +870,6 @@ private struct MascotPose {
                     ".DD...",
                     "..DD..",
                     "...DDD",
-                    "...D.D",
                     "..DDD.",
                     ".DD..."
                 ]
@@ -899,7 +883,6 @@ private struct MascotPose {
                     "..DD..",
                     "...DD.",
                     "....DD",
-                    "....DD",
                     "...DDD",
                     "..DD.."
                 ]
@@ -908,7 +891,6 @@ private struct MascotPose {
                     ".DD...",
                     "..DD..",
                     "...DDD",
-                    "....DD",
                     "...DD."
                 ]
         case .dance, .rainShuffle:
@@ -918,7 +900,6 @@ private struct MascotPose {
                     "DDD...",
                     "..DD..",
                     "..DDD.",
-                    "...D.D",
                     "...DDD"
                 ]
                 : [
@@ -926,7 +907,6 @@ private struct MascotPose {
                     "..DD..",
                     "...DDD",
                     "...D.D",
-                    "..DDD.",
                     "..DD.."
                 ]
         case .stretch:
@@ -935,14 +915,12 @@ private struct MascotPose {
                 "..DD..",
                 "...DD.",
                 "....DD",
-                "....DD",
                 "...DD."
             ]
         case .sleep:
             return [
                 "DD...",
                 "DDD..",
-                "..DD.",
                 "..DD.",
                 ".DD.."
             ]
@@ -952,7 +930,6 @@ private struct MascotPose {
                 "DDD..",
                 "..DD.",
                 "..DDD",
-                "...DD",
                 "..DD."
             ]
         default:
