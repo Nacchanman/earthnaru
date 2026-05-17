@@ -16,11 +16,7 @@ struct CompanionView: View {
                 MascotView(date: context.date, mood: mood)
                     .frame(width: 138, height: 156)
 
-                Text(Self.timeFormatter.string(from: context.date))
-                    .font(.system(size: 24, weight: .black, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(mood.textColor)
-                    .contentTransition(.numericText())
+                PixelClockView(time: Self.timeFormatter.string(from: context.date), color: mood.textColor)
             }
             .padding(.top, 10)
             .padding(.horizontal, 10)
@@ -33,6 +29,69 @@ struct CompanionView: View {
                     .stroke(.white.opacity(mood.borderOpacity), lineWidth: 1)
             )
         }
+    }
+}
+
+private struct PixelClockView: View {
+    let time: String
+    let color: Color
+
+    private let pixel: CGFloat = 4
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(time.enumerated()), id: \.offset) { _, character in
+                PixelGrid(rows: rows(for: character), pixelSize: pixel, color: color)
+            }
+        }
+        .frame(height: 28)
+        .accessibilityLabel(time)
+    }
+
+    private func rows(for character: Character) -> [String] {
+        switch character {
+        case "0": return ["111", "1.1", "1.1", "1.1", "111"]
+        case "1": return [".1.", "11.", ".1.", ".1.", "111"]
+        case "2": return ["111", "..1", "111", "1..", "111"]
+        case "3": return ["111", "..1", ".11", "..1", "111"]
+        case "4": return ["1.1", "1.1", "111", "..1", "..1"]
+        case "5": return ["111", "1..", "111", "..1", "111"]
+        case "6": return ["111", "1..", "111", "1.1", "111"]
+        case "7": return ["111", "..1", ".1.", ".1.", ".1."]
+        case "8": return ["111", "1.1", "111", "1.1", "111"]
+        case "9": return ["111", "1.1", "111", "..1", "111"]
+        case ":": return [".", "1", ".", "1", "."]
+        default: return ["...", "...", "...", "...", "..."]
+        }
+    }
+}
+
+private struct PixelGrid: View {
+    let rows: [String]
+    let pixelSize: CGFloat
+    let color: Color
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
+                ForEach(Array(Array(row).enumerated()), id: \.offset) { columnIndex, symbol in
+                    if symbol != "." {
+                        Rectangle()
+                            .fill(color)
+                            .frame(width: pixelSize, height: pixelSize)
+                            .offset(
+                                x: CGFloat(columnIndex) * pixelSize,
+                                y: CGFloat(rowIndex) * pixelSize
+                            )
+                    }
+                }
+            }
+        }
+        .frame(
+            width: CGFloat(rows.map { $0.count }.max() ?? 0) * pixelSize,
+            height: CGFloat(rows.count) * pixelSize,
+            alignment: .topLeading
+        )
     }
 }
 
