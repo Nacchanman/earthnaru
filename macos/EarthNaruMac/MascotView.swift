@@ -29,9 +29,9 @@ struct MascotView: View {
             pixelLayer(rows: pose.rightLegRows, origin: CGPoint(x: 75 + pose.rightFootX, y: 101 + pose.rightFootY))
                 .rotationEffect(.degrees(pose.rightFootAngle), anchor: .top)
 
-            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 17 + pose.leftArmX, y: 72 + pose.leftArmY))
+            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 20 + pose.leftArmX, y: 72 + pose.leftArmY))
                 .rotationEffect(.degrees(pose.leftArmAngle), anchor: .trailing)
-            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 89 + pose.rightArmX, y: 56 + pose.rightArmY))
+            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 86 + pose.rightArmX, y: 56 + pose.rightArmY))
                 .rotationEffect(.degrees(pose.rightArmAngle), anchor: .leading)
 
             pixelLayer(rows: earthRows, origin: CGPoint(x: 23, y: 34))
@@ -404,9 +404,9 @@ private struct MascotPose {
     var leftArmY: CGFloat {
         switch gesture {
         case .stretch:
-            return CGFloat(-3 * wave(start: 0.12, end: 0.44) + 3 * wave(start: 0.72, end: 0.96))
+            return CGFloat(-2 * wave(start: 0.12, end: 0.44) + 2 * wave(start: 0.72, end: 0.96))
         case .dance:
-            return CGFloat(calmBreath * 0.8 + sin(phase * Double.pi * 4.0 + 0.8) * 0.9)
+            return CGFloat(calmBreath * 0.5 + sin(phase * Double.pi * 4.0 + 0.8) * 0.5)
         case .sleep:
             return 2
         case .rainShuffle:
@@ -432,7 +432,7 @@ private struct MascotPose {
     var rightArmY: CGFloat {
         switch gesture {
         case .wave:
-            return CGFloat(-2 + sin(phase * Double.pi * 5.0) * 1.0)
+            return CGFloat(-1 + sin(phase * Double.pi * 5.0) * 0.8)
         case .admire:
             return CGFloat(-3 + pulse(center: 0.42, width: 0.30) * -1.5)
         case .stretch:
@@ -451,26 +451,26 @@ private struct MascotPose {
     var leftArmAngle: Double {
         switch gesture {
         case .stretch:
-            return -2 - wave(start: 0.12, end: 0.44) * 4 + wave(start: 0.72, end: 0.96) * 4
+            return -1 - wave(start: 0.12, end: 0.44) * 2 + wave(start: 0.72, end: 0.96) * 2
         case .curious:
-            return -1 + weightShift * -1.5
+            return weightShift * -0.8
         case .dance:
-            return -2 + sin(phase * Double.pi * 4.0 + 0.4) * 2.5
+            return -1 + sin(phase * Double.pi * 4.0 + 0.4)
         case .rainShuffle:
-            return -1 + sin(phase * Double.pi * 4.0) * 2
+            return sin(phase * Double.pi * 4.0)
         case .sleep:
-            return 3
+            return 1
         case .dream:
-            return sin(beat * 0.07) * 2
+            return sin(beat * 0.07)
         default:
-            return calmBreath * 1.5
+            return calmBreath * 0.7
         }
     }
 
     var rightArmAngle: Double {
         switch gesture {
         case .wave:
-            return -7 + sin(phase * Double.pi * 5.0) * 4
+            return -5 + sin(phase * Double.pi * 5.0) * 3
         case .admire:
             return -7 + pulse(center: 0.42, width: 0.30) * -3 + sin(beat * 0.10)
         case .stretch:
@@ -490,14 +490,8 @@ private struct MascotPose {
 
     var leftFootX: CGFloat {
         switch gesture {
-        case .step, .rainShuffle:
-            return CGFloat(min(0, sin(phase * Double.pi * 2.0)) * 1.2)
-        case .playfulStep:
-            return CGFloat(-pulse(center: 0.36, width: 0.18) * 1.0)
-        case .dance:
-            return CGFloat(sin(phase * Double.pi * 4.0) * 0.8)
         case .sleep:
-            return 1
+            return -1
         default:
             return 0
         }
@@ -505,14 +499,8 @@ private struct MascotPose {
 
     var rightFootX: CGFloat {
         switch gesture {
-        case .step, .rainShuffle:
-            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * 1.2)
-        case .playfulStep:
-            return CGFloat(pulse(center: 0.42, width: 0.22) * 1.0)
-        case .dance:
-            return CGFloat(cos(phase * Double.pi * 4.0) * 0.8)
         case .sleep:
-            return -1
+            return 1
         default:
             return 0
         }
@@ -555,27 +543,11 @@ private struct MascotPose {
     }
 
     var leftFootAngle: Double {
-        switch gesture {
-        case .step, .rainShuffle, .dance:
-            return -1.0
-        case .sleep:
-            return 0
-        default:
-            return 0
-        }
+        0
     }
 
     var rightFootAngle: Double {
-        switch gesture {
-        case .step, .rainShuffle, .dance:
-            return 1.0
-        case .playfulStep:
-            return 1.2
-        case .sleep:
-            return 0
-        default:
-            return 0
-        }
+        0
     }
 
     var starX: CGFloat {
@@ -688,55 +660,49 @@ private struct MascotPose {
         switch gesture {
         case .stretch:
             return [
-                "...DD.",
-                "..DD..",
-                ".DD...",
-                "DD....",
-                "DD....",
-                ".DD..."
+                "...DD",
+                "...DD",
+                "..DD.",
+                "..DD.",
+                "..DD."
             ]
         case .dance, .rainShuffle:
             return [
                 "...DD",
-                "..DDD",
-                ".DD..",
-                "DD...",
-                "DD...",
-                ".DD.."
+                "...DD",
+                "..DD.",
+                "..DD.",
+                "..DD."
             ]
         case .sleep:
             return [
-                "..DD",
-                ".DDD",
-                "DD..",
-                "DD..",
-                ".DD."
+                "...DD",
+                "...DD",
+                "..DD.",
+                "..DD."
             ]
         case .curious:
             return [
                 "...DD",
-                "..DDD",
-                ".DD..",
-                "DD...",
-                "DD...",
-                ".DD.."
+                "...DD",
+                "..DD.",
+                "..DD.",
+                "..DD."
             ]
         case .bounce:
             return [
-                "..DD",
-                ".DDD",
-                "DD..",
-                "DD..",
-                ".DD."
+                "...DD",
+                "...DD",
+                "..DD.",
+                "..DD."
             ]
         default:
             return [
                 "...DD",
-                "..DDD",
-                ".DD..",
-                "DD...",
-                "DD...",
-                ".DD.."
+                "...DD",
+                "..DD.",
+                "..DD.",
+                "..DD."
             ]
         }
     }
@@ -809,41 +775,40 @@ private struct MascotPose {
                 ".DD.",
                 ".DD.",
                 ".DD.",
-                "DD..",
-                "DDD.",
-                "DD.."
+                ".DD.",
+                "DDDD",
+                "DDD."
             ]
         case .dance:
             return [
                 ".DD.",
                 ".DD.",
                 ".DD.",
-                "DD..",
-                "DDD.",
-                "DD.."
+                ".DD.",
+                "DDDD",
+                "DDD."
             ]
         case .bounce:
             return [
                 ".DD.",
-                "DDD.",
-                "DD..",
-                "DDDD"
+                ".DD.",
+                "DDDD",
+                "DDD."
             ]
         case .sleep:
             return [
                 ".DD.",
                 ".DD.",
-                "DDD.",
-                "DDDD"
+                "DDDD",
+                "DDD."
             ]
         default:
             return [
                 ".DD.",
                 ".DD.",
                 ".DD.",
-                "DD..",
                 "DDDD",
-                "DDDD"
+                "DDD."
             ]
         }
     }
@@ -855,41 +820,40 @@ private struct MascotPose {
                 ".DD.",
                 ".DD.",
                 ".DD.",
-                "..DD",
-                ".DDD",
-                "..DD"
+                ".DD.",
+                "DDDD",
+                ".DDD"
             ]
         case .dance, .playfulStep:
             return [
                 ".DD.",
                 ".DD.",
                 ".DD.",
-                "..DD",
-                ".DDD",
-                "..DD"
+                ".DD.",
+                "DDDD",
+                ".DDD"
             ]
         case .bounce:
             return [
                 ".DD.",
-                ".DDD",
-                "..DD",
-                "DDDD"
+                ".DD.",
+                "DDDD",
+                ".DDD"
             ]
         case .sleep:
             return [
                 ".DD.",
                 ".DD.",
-                ".DDD",
-                "DDDD"
+                "DDDD",
+                ".DDD"
             ]
         default:
             return [
                 ".DD.",
                 ".DD.",
                 ".DD.",
-                "..DD",
                 "DDDD",
-                "DDDD"
+                ".DDD"
             ]
         }
     }
