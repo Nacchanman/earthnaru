@@ -7,40 +7,45 @@ struct MascotView: View {
 
     private let pixel: CGFloat = 4
     private let canvasSize = CGSize(width: 138, height: 156)
-    private let earthOrigin = CGPoint(x: 22, y: 34)
 
     var body: some View {
         let pose = MascotPose(date: date, mood: mood)
 
         ZStack(alignment: .topLeading) {
             ambientDots(pose: pose)
+            characterGroup(pose: pose)
+                .scaleEffect(x: pose.squash, y: pose.stretch, anchor: .bottom)
+                .rotationEffect(.degrees(pose.bodyAngle), anchor: .bottom)
+                .offset(x: pose.bodyX, y: pose.bodyY)
+        }
+        .frame(width: canvasSize.width, height: canvasSize.height, alignment: .topLeading)
+        .clipped()
+    }
 
-            pixelLayer(rows: legRows(left: true), origin: CGPoint(x: 50 + pose.leftFootX, y: 122 + pose.footY))
+    private func characterGroup(pose: MascotPose) -> some View {
+        ZStack(alignment: .topLeading) {
+            pixelLayer(rows: legRows(left: true), origin: CGPoint(x: 50 + pose.leftFootX, y: 121 + pose.leftFootY))
                 .rotationEffect(.degrees(pose.leftFootAngle), anchor: .top)
-            pixelLayer(rows: legRows(left: false), origin: CGPoint(x: 80 + pose.rightFootX, y: 122 + pose.altFootY))
+            pixelLayer(rows: legRows(left: false), origin: CGPoint(x: 78 + pose.rightFootX, y: 121 + pose.rightFootY))
                 .rotationEffect(.degrees(pose.rightFootAngle), anchor: .top)
 
-            pixelLayer(rows: leftArmRows, origin: CGPoint(x: 4 + pose.leftArmX, y: 78 + pose.bodyY + pose.leftArmY))
+            pixelLayer(rows: leftArmRows, origin: CGPoint(x: 1 + pose.leftArmX, y: 76 + pose.leftArmY))
                 .rotationEffect(.degrees(pose.leftArmAngle), anchor: .trailing)
-            pixelLayer(rows: rightArmRows, origin: CGPoint(x: 104 + pose.rightArmX, y: 55 + pose.bodyY + pose.rightArmY))
+            pixelLayer(rows: rightArmRows, origin: CGPoint(x: 104 + pose.rightArmX, y: 57 + pose.rightArmY))
                 .rotationEffect(.degrees(pose.rightArmAngle), anchor: .leading)
 
-            pixelLayer(rows: earthRows, origin: CGPoint(x: earthOrigin.x, y: earthOrigin.y + pose.bodyY))
+            pixelLayer(rows: earthRows, origin: CGPoint(x: 23, y: 34))
                 .shadow(color: .black.opacity(mood == .night || mood == .lateNight ? 0.28 : 0.16), radius: 0, x: 3, y: 3)
-                .scaleEffect(x: pose.squash, y: pose.stretch, anchor: .bottom)
-                .rotationEffect(.degrees(pose.bodyAngle))
-                .offset(x: pose.bodyX)
 
             eyes(pose: pose)
 
-            pixelLayer(rows: starRows, origin: CGPoint(x: 110 + pose.starX, y: 30 + pose.bodyY + pose.starY))
+            pixelLayer(rows: starRows, origin: CGPoint(x: 111 + pose.starX, y: 30 + pose.starY))
                 .scaleEffect(pose.starScale, anchor: .center)
                 .rotationEffect(.degrees(pose.starAngle))
 
             accessory(pose: pose)
         }
         .frame(width: canvasSize.width, height: canvasSize.height, alignment: .topLeading)
-        .clipped()
     }
 
     private func ambientDots(pose: MascotPose) -> some View {
@@ -58,13 +63,17 @@ struct MascotView: View {
     private func accessory(pose: MascotPose) -> some View {
         switch pose.accessory {
         case .sparkle:
-            pixelLayer(rows: sparkleRows, origin: CGPoint(x: 95 + pose.sparkleX, y: 16 + pose.sparkleY))
+            pixelLayer(rows: sparkleRows, origin: CGPoint(x: 96 + pose.sparkleX, y: 15 + pose.sparkleY))
         case .sun:
-            pixelLayer(rows: sunRows, origin: CGPoint(x: 9 + pose.sparkleX, y: 10 + pose.sparkleY))
+            pixelLayer(rows: sunRows, origin: CGPoint(x: 10 + pose.sparkleX, y: 11 + pose.sparkleY))
         case .moon:
-            pixelLayer(rows: moonRows, origin: CGPoint(x: 12 + pose.sparkleX, y: 14 + pose.sparkleY))
+            pixelLayer(rows: moonRows, origin: CGPoint(x: 11 + pose.sparkleX, y: 14 + pose.sparkleY))
         case .sleep:
-            pixelLayer(rows: sleepRows, origin: CGPoint(x: 98 + pose.sparkleX, y: 20 + pose.sparkleY))
+            pixelLayer(rows: sleepRows, origin: CGPoint(x: 99 + pose.sparkleX, y: 18 + pose.sparkleY))
+        case .orbit:
+            pixelLayer(rows: orbitRows, origin: CGPoint(x: 13 + pose.sparkleX, y: 96 + pose.sparkleY))
+        case .rain:
+            pixelLayer(rows: rainRows, origin: CGPoint(x: 10 + pose.sparkleX, y: 12 + pose.sparkleY))
         case .none:
             EmptyView()
         }
@@ -76,12 +85,12 @@ struct MascotView: View {
     }
 
     private func eyes(pose: MascotPose) -> some View {
-        HStack(spacing: pose.eyeSpacing) {
-            PixelGrid(rows: pose.eyeRows, pixelSize: 3)
-            PixelGrid(rows: pose.eyeRows, pixelSize: 3)
+        ZStack(alignment: .topLeading) {
+            PixelGrid(rows: pose.eyeRows, pixelSize: pixel)
+                .offset(x: 58 + pose.eyeLookX, y: 62 + pose.eyeY)
+            PixelGrid(rows: pose.eyeRows, pixelSize: pixel)
+                .offset(x: 87 + pose.eyeLookX, y: 62 + pose.eyeY)
         }
-        .offset(x: earthOrigin.x + 49 + pose.bodyX, y: earthOrigin.y + 42 + pose.bodyY + pose.eyeY)
-        .rotationEffect(.degrees(pose.bodyAngle))
     }
 
     private var earthRows: [String] {
@@ -183,6 +192,22 @@ struct MascotView: View {
         ]
     }
 
+    private var orbitRows: [String] {
+        [
+            "....Y",
+            "..Y..",
+            "Y...."
+        ]
+    }
+
+    private var rainRows: [String] {
+        [
+            "L...L...L",
+            ".L...L...",
+            "...L...L."
+        ]
+    }
+
     private func legRows(left: Bool) -> [String] {
         left
         ? [
@@ -213,7 +238,7 @@ private struct MascotPose {
     }
 
     private var slot: Int {
-        Int(t / 5.0)
+        Int(t / 4.0)
     }
 
     private var beat: Double {
@@ -227,12 +252,16 @@ private struct MascotPose {
 
     var bodyX: CGFloat {
         switch routine {
-        case .hop, .dance:
+        case .hop, .dance, .march:
             return CGFloat(sin(beat * 0.50)) * 3
-        case .lookAround:
+        case .lookAround, .orbit:
             return CGFloat(sin(beat * 0.18)) * 4
+        case .sway:
+            return CGFloat(sin(beat * 0.22)) * 5
         case .dream:
             return CGFloat(sin(beat * 0.14)) * 2
+        case .shake:
+            return CGFloat(sin(beat * 1.50)) * 2
         default:
             return CGFloat(sin(beat * 0.12)) * 1.2
         }
@@ -246,6 +275,8 @@ private struct MascotPose {
             return CGFloat(sin(beat * 0.75)) * 4 - 2
         case .stretch:
             return CGFloat(sin(beat * 0.20)) * -5
+        case .peek:
+            return CGFloat(sin(beat * 0.18)) * 3 + 2
         case .sleep, .dream:
             return CGFloat(sin(beat * 0.10)) * 2
         default:
@@ -255,12 +286,16 @@ private struct MascotPose {
 
     var bodyAngle: Double {
         switch routine {
-        case .dance:
+        case .dance, .march:
             return sin(beat * 0.45) * 5
         case .lookAround:
             return sin(beat * 0.18) * 4
+        case .sway:
+            return sin(beat * 0.18) * 7
         case .sleep, .dream:
             return sin(beat * 0.08) * 2
+        case .shake:
+            return sin(beat * 1.50) * 3
         default:
             return sin(beat * 0.13) * 1.5
         }
@@ -272,6 +307,8 @@ private struct MascotPose {
             return 1.0 + abs(CGFloat(sin(beat * 0.50))) * 0.05
         case .stretch:
             return 0.94
+        case .sleep:
+            return 1.04
         default:
             return 1.0
         }
@@ -297,9 +334,11 @@ private struct MascotPose {
     var leftArmY: CGFloat {
         switch routine {
         case .stretch:
-            return -8
-        case .dance:
+            return -9
+        case .dance, .clap:
             return CGFloat(sin(beat * 0.60)) * 5
+        case .peek:
+            return -4
         case .sleep:
             return 4
         default:
@@ -308,7 +347,11 @@ private struct MascotPose {
     }
 
     var rightArmX: CGFloat {
-        routine == .wave || routine == .starToss ? 2 : 0
+        switch routine {
+        case .wave, .starToss: return 2
+        case .clap: return -3
+        default: return 0
+        }
     }
 
     var rightArmY: CGFloat {
@@ -319,6 +362,8 @@ private struct MascotPose {
             return -8 + CGFloat(sin(beat * 0.55)) * 5
         case .stretch:
             return -12
+        case .clap:
+            return CGFloat(cos(beat * 0.70)) * 5
         case .sleep:
             return 3
         default:
@@ -330,8 +375,12 @@ private struct MascotPose {
         switch routine {
         case .dance:
             return -10 + sin(beat * 0.60) * 14
+        case .clap:
+            return -18 + sin(beat * 0.70) * 15
         case .stretch:
             return -20
+        case .peek:
+            return -28
         case .sleep:
             return 10
         default:
@@ -349,39 +398,67 @@ private struct MascotPose {
             return -26
         case .dance:
             return 14 + sin(beat * 0.55) * 14
+        case .clap:
+            return 18 - sin(beat * 0.70) * 15
         default:
             return sin(beat * 0.22) * 8
         }
     }
 
     var leftFootX: CGFloat {
-        routine == .dance ? CGFloat(sin(beat * 0.50)) * 3 : 0
+        switch routine {
+        case .dance, .march:
+            return CGFloat(sin(beat * 0.50)) * 3
+        default:
+            return 0
+        }
     }
 
     var rightFootX: CGFloat {
-        routine == .dance ? CGFloat(cos(beat * 0.50)) * 3 : 0
+        switch routine {
+        case .dance, .march:
+            return CGFloat(cos(beat * 0.50)) * 3
+        default:
+            return 0
+        }
     }
 
-    var footY: CGFloat {
-        routine == .hop ? abs(CGFloat(sin(beat * 0.50))) * -3 : 0
+    var leftFootY: CGFloat {
+        switch routine {
+        case .hop:
+            return abs(CGFloat(sin(beat * 0.50))) * -3
+        case .march:
+            return max(0, CGFloat(sin(beat * 0.55))) * -4
+        default:
+            return 0
+        }
     }
 
-    var altFootY: CGFloat {
-        routine == .dance ? CGFloat(sin(beat * 0.50)) * 3 : footY
+    var rightFootY: CGFloat {
+        switch routine {
+        case .dance:
+            return CGFloat(sin(beat * 0.50)) * 3
+        case .march:
+            return max(0, CGFloat(cos(beat * 0.55))) * -4
+        default:
+            return leftFootY
+        }
     }
 
     var leftFootAngle: Double {
-        routine == .dance ? sin(beat * 0.50) * 8 : 0
+        routine == .dance || routine == .march ? sin(beat * 0.50) * 8 : 0
     }
 
     var rightFootAngle: Double {
-        routine == .dance ? cos(beat * 0.50) * 8 : 0
+        routine == .dance || routine == .march ? cos(beat * 0.50) * 8 : 0
     }
 
     var starX: CGFloat {
         switch routine {
         case .starToss:
             return CGFloat(sin(beat * 0.50)) * 9
+        case .orbit:
+            return CGFloat(cos(beat * 0.28)) * 15 - 6
         case .dance:
             return CGFloat(cos(beat * 0.40)) * 3
         default:
@@ -393,6 +470,8 @@ private struct MascotPose {
         switch routine {
         case .starToss:
             return -abs(CGFloat(sin(beat * 0.50))) * 15
+        case .orbit:
+            return CGFloat(sin(beat * 0.28)) * 10
         case .sleep, .dream:
             return CGFloat(sin(beat * 0.12)) * 2
         default:
@@ -402,7 +481,7 @@ private struct MascotPose {
 
     var starScale: CGFloat {
         switch routine {
-        case .starToss, .dance:
+        case .starToss, .dance, .orbit:
             return 1.0 + abs(CGFloat(sin(beat * 0.50))) * 0.22
         case .sleep:
             return 0.84
@@ -413,7 +492,7 @@ private struct MascotPose {
 
     var starAngle: Double {
         switch routine {
-        case .starToss, .dance:
+        case .starToss, .dance, .orbit:
             return t * 90.0
         default:
             return sin(beat * 0.15) * 8
@@ -421,36 +500,50 @@ private struct MascotPose {
     }
 
     var eyeRows: [String] {
-        if Int(t * 3.0) % 31 == 0 {
+        if Int(t * 3.0) % 37 == 0 {
             return ["DD"]
         }
 
         switch routine {
         case .sleep:
-            return ["...", "DDD"]
+            return ["..", "DD"]
         case .dream:
-            return [".D.", "D.D"]
-        case .dance, .hop:
-            return ["D.D", ".D."]
+            return [".D", "D.", ".D", "D."]
+        case .wink:
+            return ["DD"]
         default:
-            return ["DD", "DD", "DD", "DD"]
+            return ["DD", "DD", "DD", "DD", "DD"]
         }
     }
 
-    var eyeSpacing: CGFloat {
-        routine == .lookAround ? 24 + CGFloat(sin(beat * 0.18)) * 2 : 22
+    var eyeLookX: CGFloat {
+        switch routine {
+        case .lookAround, .peek:
+            return CGFloat(sin(beat * 0.18)) * 2
+        default:
+            return 0
+        }
     }
 
     var eyeY: CGFloat {
-        routine == .sleep ? 3 : 0
+        switch routine {
+        case .sleep:
+            return 5
+        case .stretch:
+            return -2
+        default:
+            return 0
+        }
     }
 
     var accessory: Accessory {
         switch routine {
-        case .sparkle: return .sparkle
+        case .sparkle, .clap: return .sparkle
         case .sunSalute: return .sun
         case .sleep: return .sleep
         case .dream: return .moon
+        case .orbit: return .orbit
+        case .rainDance: return .rain
         default: return .none
         }
     }
@@ -467,7 +560,7 @@ private struct MascotPose {
         switch mood {
         case .night, .lateNight: return 7
         case .dawn, .evening: return 4
-        default: return routine == .dance || routine == .sparkle ? 5 : 2
+        default: return routine == .dance || routine == .sparkle || routine == .rainDance ? 5 : 2
         }
     }
 
@@ -504,6 +597,14 @@ private enum Routine {
     case sunSalute
     case sleep
     case dream
+    case march
+    case clap
+    case orbit
+    case wink
+    case sway
+    case peek
+    case shake
+    case rainDance
 }
 
 private enum Accessory {
@@ -512,25 +613,27 @@ private enum Accessory {
     case sun
     case moon
     case sleep
+    case orbit
+    case rain
 }
 
 private extension TimeMood {
     var routines: [Routine] {
         switch self {
         case .dawn:
-            return [.sleep, .stretch, .sunSalute, .breathe, .wave, .lookAround, .sparkle, .hop]
+            return [.sleep, .stretch, .sunSalute, .breathe, .wave, .lookAround, .sparkle, .hop, .wink, .sway, .peek]
         case .morning:
-            return [.stretch, .wave, .hop, .breathe, .starToss, .lookAround, .dance, .sparkle]
+            return [.stretch, .wave, .hop, .breathe, .starToss, .lookAround, .dance, .sparkle, .march, .clap, .orbit, .wink]
         case .noon:
-            return [.hop, .dance, .starToss, .wave, .sparkle, .breathe, .lookAround, .hop]
+            return [.hop, .dance, .starToss, .wave, .sparkle, .breathe, .lookAround, .march, .clap, .shake, .orbit, .rainDance]
         case .afternoon:
-            return [.breathe, .lookAround, .wave, .starToss, .stretch, .dance, .sparkle, .hop]
+            return [.breathe, .lookAround, .wave, .starToss, .stretch, .dance, .sparkle, .hop, .sway, .march, .peek, .wink]
         case .evening:
-            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .starToss, .dance, .breathe]
+            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .starToss, .dance, .sway, .clap, .orbit, .dream]
         case .night:
-            return [.breathe, .sleep, .dream, .lookAround, .wave, .sparkle, .sleep, .dream]
+            return [.breathe, .sleep, .dream, .lookAround, .wave, .sparkle, .sleep, .dream, .sway, .wink]
         case .lateNight:
-            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle]
+            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle, .sway]
         }
     }
 }
