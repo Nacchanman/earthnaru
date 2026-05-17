@@ -193,7 +193,7 @@ private struct MascotPose {
     }
 
     private var slot: Int {
-        Int(t / 4.0)
+        Int(t / 7.0)
     }
 
     private var beat: Double {
@@ -205,256 +205,374 @@ private struct MascotPose {
         return routines[abs(slot) % routines.count]
     }
 
-    var bodyX: CGFloat {
-        switch routine {
-        case .hop, .dance, .march:
-            return CGFloat(sin(beat * 0.50)) * 3
-        case .lookAround, .orbit:
-            return CGFloat(sin(beat * 0.18)) * 4
-        case .sway:
-            return CGFloat(sin(beat * 0.22)) * 5
-        case .dream:
-            return CGFloat(sin(beat * 0.14)) * 2
-        case .shake:
-            return CGFloat(sin(beat * 1.50)) * 2
-        case .twirl:
-            return CGFloat(sin(beat * 0.70)) * 4
-        case .moonWalk:
-            return CGFloat(sin(beat * 0.38)) * 6
-        case .float:
-            return CGFloat(sin(beat * 0.10)) * 3
-        default:
-            return CGFloat(sin(beat * 0.12)) * 1.2
-        }
+    private var phase: Double {
+        let value = t.truncatingRemainder(dividingBy: 7.0) / 7.0
+        return value < 0 ? value + 1.0 : value
     }
 
-    var bodyY: CGFloat {
-        switch routine {
-        case .hop:
-            return -abs(CGFloat(sin(beat * 0.50))) * 10
-        case .dance:
-            return CGFloat(sin(beat * 0.75)) * 4 - 2
-        case .stretch:
-            return CGFloat(sin(beat * 0.20)) * -5
-        case .peek:
-            return CGFloat(sin(beat * 0.18)) * 3 + 2
-        case .cheer:
-            return -abs(CGFloat(sin(beat * 0.55))) * 7
-        case .float:
-            return CGFloat(sin(beat * 0.12)) * 5 - 4
-        case .sleep, .dream:
-            return CGFloat(sin(beat * 0.10)) * 2
-        default:
-            return CGFloat(sin(beat * 0.18)) * 2
-        }
+    private var calmBreath: Double {
+        sin(beat * 0.10)
     }
 
-    var bodyAngle: Double {
-        switch routine {
-        case .dance, .march:
-            return sin(beat * 0.45) * 5
-        case .lookAround:
-            return sin(beat * 0.18) * 4
-        case .sway:
-            return sin(beat * 0.18) * 7
-        case .sleep, .dream:
-            return sin(beat * 0.08) * 2
-        case .shake:
-            return sin(beat * 1.50) * 3
-        case .twirl:
-            return sin(beat * 0.70) * 10
-        case .moonWalk:
-            return sin(beat * 0.32) * -5
-        default:
-            return sin(beat * 0.13) * 1.5
-        }
-    }
-
-    var squash: CGFloat {
-        switch routine {
-        case .hop:
-            return 1.0 + abs(CGFloat(sin(beat * 0.50))) * 0.05
-        case .stretch:
-            return 0.94
-        case .sleep:
-            return 1.04
-        case .cheer:
-            return 0.96 + abs(CGFloat(sin(beat * 0.55))) * 0.06
-        default:
+    private var liveliness: Double {
+        switch mood {
+        case .dawn, .night, .lateNight:
+            return 0.7
+        case .evening:
+            return 0.85
+        case .morning, .noon, .afternoon:
             return 1.0
         }
     }
 
-    var stretch: CGFloat {
+    private func smooth(_ x: Double) -> Double {
+        let clamped = min(max(x, 0.0), 1.0)
+        return clamped * clamped * (3.0 - 2.0 * clamped)
+    }
+
+    private func pulse(center: Double, width: Double) -> Double {
+        let distance = abs(phase - center)
+        return smooth(1.0 - distance / width)
+    }
+
+    private func wave(start: Double, end: Double) -> Double {
+        smooth((phase - start) / (end - start))
+    }
+
+    private var gesture: Gesture {
         switch routine {
+        case .breathe, .sparkle:
+            return .settle
+        case .stretch, .sunSalute:
+            return .stretch
+        case .wave, .wink:
+            return .wave
+        case .hop, .cheer:
+            return .bounce
+        case .dance, .clap, .twirl:
+            return .dance
+        case .lookAround, .peek:
+            return .curious
+        case .starToss, .orbit:
+            return .admire
+        case .sleep:
+            return .sleep
+        case .dream, .float:
+            return .dream
+        case .march, .moonWalk:
+            return .step
+        case .sway:
+            return .sway
+        case .rainDance:
+            return .rainShuffle
+        case .kick, .shake:
+            return .playfulStep
+        }
+    }
+
+    private var weightShift: Double {
+        switch gesture {
+        case .settle:
+            return sin(beat * 0.08) * 0.35
+        case .curious:
+            return sin(phase * Double.pi * 2.0) * 0.85
+        case .wave:
+            return 0.35 + pulse(center: 0.46, width: 0.30) * 0.25
+        case .bounce:
+            return sin(phase * Double.pi * 2.0) * 0.25
         case .stretch:
-            return 1.10 + CGFloat(sin(beat * 0.20)) * 0.03
-        case .hop:
-            return 1.0 - abs(CGFloat(sin(beat * 0.50))) * 0.04
-        case .cheer:
-            return 1.06 - abs(CGFloat(sin(beat * 0.55))) * 0.04
+            return sin(phase * Double.pi) * 0.30
+        case .step, .rainShuffle, .playfulStep:
+            return sin(phase * Double.pi * 2.0) * 0.95
+        case .dance:
+            return sin(phase * Double.pi * 4.0) * 0.75
+        case .admire:
+            return 0.45 + sin(beat * 0.10) * 0.15
+        case .sway:
+            return sin(beat * 0.12) * 1.0
         case .sleep, .dream:
-            return 0.98 + CGFloat(sin(beat * 0.10)) * 0.02
+            return sin(beat * 0.055) * 0.25
+        }
+    }
+
+    var bodyX: CGFloat {
+        let base = calmBreath * 0.8
+        let weight = weightShift * 2.6 * liveliness
+        let accent: Double
+        switch gesture {
+        case .curious:
+            accent = pulse(center: 0.36, width: 0.18) * -2.0 + pulse(center: 0.68, width: 0.20) * 2.0
+        case .dance:
+            accent = sin(phase * Double.pi * 6.0) * 1.2
+        case .dream:
+            accent = sin(beat * 0.08) * 2.4
         default:
-            return 1.0 + CGFloat(sin(beat * 0.16)) * 0.01
+            accent = 0
+        }
+        return CGFloat(base + weight + accent)
+    }
+
+    var bodyY: CGFloat {
+        let breath = calmBreath * 1.5
+        switch gesture {
+        case .bounce:
+            let crouch = pulse(center: 0.18, width: 0.14)
+            let lift = pulse(center: 0.44, width: 0.20)
+            let settle = pulse(center: 0.72, width: 0.16)
+            return CGFloat(breath + crouch * 3.5 - lift * 8.5 + settle * 2.2)
+        case .dance:
+            return CGFloat(breath + sin(phase * Double.pi * 4.0) * 2.8 - pulse(center: 0.42, width: 0.18) * 3.0)
+        case .stretch:
+            return CGFloat(breath - wave(start: 0.12, end: 0.46) * 6.0 + wave(start: 0.70, end: 0.96) * 5.0)
+        case .step, .rainShuffle, .playfulStep:
+            return CGFloat(breath - abs(sin(phase * Double.pi * 2.0)) * 1.8)
+        case .sleep:
+            return CGFloat(2.5 + sin(beat * 0.055) * 1.4)
+        case .dream:
+            return CGFloat(-2.5 + sin(beat * 0.07) * 3.5)
+        default:
+            return CGFloat(breath)
+        }
+    }
+
+    var bodyAngle: Double {
+        switch gesture {
+        case .curious:
+            return weightShift * 4.5
+        case .wave, .admire:
+            return 2.5 + sin(beat * 0.10) * 1.0
+        case .dance:
+            return sin(phase * Double.pi * 4.0) * 5.2
+        case .step, .rainShuffle, .playfulStep:
+            return weightShift * 3.4
+        case .stretch:
+            return sin(phase * Double.pi) * 2.0
+        case .sleep:
+            return -3.0 + sin(beat * 0.055) * 1.0
+        case .dream:
+            return sin(beat * 0.07) * 2.4
+        case .sway:
+            return weightShift * 5.0
+        default:
+            return calmBreath * 1.2
+        }
+    }
+
+    var squash: CGFloat {
+        switch gesture {
+        case .bounce:
+            return CGFloat(1.0 + pulse(center: 0.18, width: 0.14) * 0.06 - pulse(center: 0.44, width: 0.20) * 0.03)
+        case .stretch:
+            return CGFloat(1.0 - wave(start: 0.12, end: 0.46) * 0.06 + wave(start: 0.70, end: 0.96) * 0.05)
+        case .sleep:
+            return CGFloat(1.03 + sin(beat * 0.055) * 0.01)
+        case .dance:
+            return CGFloat(1.0 + abs(sin(phase * Double.pi * 4.0)) * 0.025)
+        default:
+            return CGFloat(1.0 + calmBreath * 0.008)
+        }
+    }
+
+    var stretch: CGFloat {
+        switch gesture {
+        case .bounce:
+            return CGFloat(1.0 - pulse(center: 0.18, width: 0.14) * 0.045 + pulse(center: 0.44, width: 0.20) * 0.04)
+        case .stretch:
+            return CGFloat(1.0 + wave(start: 0.12, end: 0.46) * 0.08 - wave(start: 0.70, end: 0.96) * 0.06)
+        case .sleep:
+            return CGFloat(0.98 + sin(beat * 0.055) * 0.012)
+        case .dream:
+            return CGFloat(1.0 + sin(beat * 0.07) * 0.02)
+        default:
+            return CGFloat(1.0 - calmBreath * 0.008)
         }
     }
 
     var leftArmX: CGFloat {
-        routine == .stretch ? -4 : 0
+        switch gesture {
+        case .stretch:
+            return -2
+        case .dance:
+            return CGFloat(sin(phase * Double.pi * 4.0)) * 1.5
+        case .sleep:
+            return 2
+        default:
+            return 0
+        }
     }
 
     var leftArmY: CGFloat {
-        switch routine {
+        switch gesture {
         case .stretch:
-            return -9
-        case .dance, .clap:
-            return CGFloat(sin(beat * 0.60)) * 5
-        case .peek:
-            return -4
-        case .cheer:
-            return -14
-        case .kick:
-            return CGFloat(sin(beat * 0.45)) * 3
+            return CGFloat(-8 * wave(start: 0.12, end: 0.44) + 7 * wave(start: 0.72, end: 0.96))
+        case .dance:
+            return CGFloat(sin(phase * Double.pi * 4.0 + 0.8) * 3.0)
         case .sleep:
-            return 4
+            return 5
+        case .rainShuffle:
+            return CGFloat(1 + sin(phase * Double.pi * 4.0) * 2)
         default:
-            return CGFloat(sin(beat * 0.22)) * 2
+            return CGFloat(calmBreath * 1.4)
         }
     }
 
     var rightArmX: CGFloat {
-        switch routine {
-        case .wave, .starToss: return 2
-        case .clap: return -3
-        case .cheer: return 1
-        default: return 0
+        switch gesture {
+        case .wave, .admire:
+            return 2
+        case .dance:
+            return CGFloat(cos(phase * Double.pi * 4.0)) * 1.5
+        case .sleep:
+            return -2
+        default:
+            return 0
         }
     }
 
     var rightArmY: CGFloat {
-        switch routine {
+        switch gesture {
         case .wave:
-            return CGFloat(sin(beat * 0.80)) * 7 - 4
-        case .starToss:
-            return -8 + CGFloat(sin(beat * 0.55)) * 5
+            return CGFloat(-7 + sin(phase * Double.pi * 5.0) * 2.5)
+        case .admire:
+            return CGFloat(-8 + pulse(center: 0.42, width: 0.30) * -3)
         case .stretch:
-            return -12
-        case .clap:
-            return CGFloat(cos(beat * 0.70)) * 5
-        case .cheer:
-            return -16
-        case .kick:
-            return CGFloat(cos(beat * 0.45)) * 3
+            return CGFloat(-10 * wave(start: 0.12, end: 0.44) + 8 * wave(start: 0.72, end: 0.96))
+        case .dance:
+            return CGFloat(cos(phase * Double.pi * 4.0 + 0.6) * 3.0)
         case .sleep:
-            return 3
+            return 4
+        case .rainShuffle:
+            return CGFloat(1 + cos(phase * Double.pi * 4.0) * 2)
         default:
-            return CGFloat(cos(beat * 0.18)) * 2
+            return CGFloat(calmBreath * 1.2)
         }
     }
 
     var leftArmAngle: Double {
-        switch routine {
-        case .dance:
-            return -10 + sin(beat * 0.60) * 14
-        case .clap:
-            return -18 + sin(beat * 0.70) * 15
+        switch gesture {
         case .stretch:
-            return -20
-        case .peek:
-            return -28
-        case .cheer:
-            return -36 + sin(beat * 0.55) * 10
-        case .twirl:
-            return sin(beat * 0.70) * 26
+            return -8 - wave(start: 0.12, end: 0.44) * 16 + wave(start: 0.72, end: 0.96) * 15
+        case .curious:
+            return -6 + weightShift * -5
+        case .dance:
+            return -10 + sin(phase * Double.pi * 4.0 + 0.4) * 12
+        case .rainShuffle:
+            return -4 + sin(phase * Double.pi * 4.0) * 8
         case .sleep:
-            return 10
+            return 12
+        case .dream:
+            return sin(beat * 0.07) * 8
         default:
-            return sin(beat * 0.25) * 7
+            return calmBreath * 5
         }
     }
 
     var rightArmAngle: Double {
-        switch routine {
+        switch gesture {
         case .wave:
-            return -22 + sin(beat * 0.85) * 22
-        case .starToss:
-            return -30 + sin(beat * 0.55) * 14
+            return -22 + sin(phase * Double.pi * 5.0) * 12
+        case .admire:
+            return -24 + pulse(center: 0.42, width: 0.30) * -8 + sin(beat * 0.10) * 3
         case .stretch:
-            return -26
+            return -10 - wave(start: 0.12, end: 0.44) * 18 + wave(start: 0.72, end: 0.96) * 17
         case .dance:
-            return 14 + sin(beat * 0.55) * 14
-        case .clap:
-            return 18 - sin(beat * 0.70) * 15
-        case .cheer:
-            return 36 - sin(beat * 0.55) * 10
-        case .twirl:
-            return -sin(beat * 0.70) * 26
+            return 10 + cos(phase * Double.pi * 4.0 + 0.4) * 12
+        case .rainShuffle:
+            return 4 + cos(phase * Double.pi * 4.0) * 8
+        case .sleep:
+            return -10
+        case .dream:
+            return sin(beat * 0.07 + 1.2) * 8
         default:
-            return sin(beat * 0.22) * 8
+            return calmBreath * 5
         }
     }
 
     var leftFootX: CGFloat {
-        switch routine {
-        case .dance, .march, .moonWalk:
-            return CGFloat(sin(beat * 0.50)) * 3
-        case .kick:
-            return -3
+        switch gesture {
+        case .step, .rainShuffle:
+            return CGFloat(min(0, sin(phase * Double.pi * 2.0)) * 3.0)
+        case .playfulStep:
+            return CGFloat(-pulse(center: 0.36, width: 0.18) * 3.0)
+        case .dance:
+            return CGFloat(sin(phase * Double.pi * 4.0) * 2.2)
+        case .sleep:
+            return 2
         default:
             return 0
         }
     }
 
     var rightFootX: CGFloat {
-        switch routine {
-        case .dance, .march, .moonWalk:
-            return CGFloat(cos(beat * 0.50)) * 3
-        case .kick:
-            return abs(CGFloat(sin(beat * 0.55))) * 13
+        switch gesture {
+        case .step, .rainShuffle:
+            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * 3.0)
+        case .playfulStep:
+            return CGFloat(pulse(center: 0.42, width: 0.22) * 4.0)
+        case .dance:
+            return CGFloat(cos(phase * Double.pi * 4.0) * 2.2)
+        case .sleep:
+            return -2
         default:
             return 0
         }
     }
 
     var leftFootY: CGFloat {
-        switch routine {
-        case .hop:
-            return abs(CGFloat(sin(beat * 0.50))) * -3
-        case .march:
-            return max(0, CGFloat(sin(beat * 0.55))) * -4
-        case .moonWalk:
-            return CGFloat(sin(beat * 0.40)) * 2
+        switch gesture {
+        case .bounce:
+            return CGFloat(-pulse(center: 0.44, width: 0.20) * 2.0)
+        case .step:
+            return CGFloat(max(0, -sin(phase * Double.pi * 2.0)) * -3.0)
+        case .rainShuffle:
+            return CGFloat(max(0, -sin(phase * Double.pi * 2.0)) * -1.5)
+        case .dance:
+            return CGFloat(max(0, sin(phase * Double.pi * 4.0)) * -2.5)
+        case .sleep:
+            return 1
         default:
             return 0
         }
     }
 
     var rightFootY: CGFloat {
-        switch routine {
-        case .dance:
-            return CGFloat(sin(beat * 0.50)) * 3
-        case .march:
-            return max(0, CGFloat(cos(beat * 0.55))) * -4
-        case .kick:
-            return -abs(CGFloat(sin(beat * 0.55))) * 8
-        case .moonWalk:
-            return CGFloat(cos(beat * 0.40)) * 2
-        default:
+        switch gesture {
+        case .bounce:
             return leftFootY
+        case .step:
+            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * -3.0)
+        case .rainShuffle:
+            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * -1.5)
+        case .dance:
+            return CGFloat(max(0, -sin(phase * Double.pi * 4.0)) * -2.5)
+        case .playfulStep:
+            return CGFloat(-pulse(center: 0.42, width: 0.22) * 3.0)
+        case .sleep:
+            return 1
+        default:
+            return 0
         }
     }
 
     var leftFootAngle: Double {
-        routine == .dance || routine == .march || routine == .moonWalk ? sin(beat * 0.50) * 8 : 0
+        switch gesture {
+        case .step, .rainShuffle, .dance:
+            return min(0, sin(phase * Double.pi * 2.0)) * 6
+        case .sleep:
+            return -6
+        default:
+            return 0
+        }
     }
 
     var rightFootAngle: Double {
-        switch routine {
-        case .kick:
-            return -28 * abs(sin(beat * 0.55))
-        case .dance, .march, .moonWalk:
-            return cos(beat * 0.50) * 8
+        switch gesture {
+        case .step, .rainShuffle, .dance:
+            return max(0, sin(phase * Double.pi * 2.0)) * -6
+        case .playfulStep:
+            return -pulse(center: 0.42, width: 0.22) * 10
+        case .sleep:
+            return 6
         default:
             return 0
         }
@@ -507,16 +625,16 @@ private struct MascotPose {
     }
 
     var eyeRows: [String] {
-        if Int(t * 3.0) % 37 == 0 {
+        if Int(t * 3.0) % 41 == 0 {
             return ["DD"]
         }
 
-        switch routine {
+        switch gesture {
         case .sleep:
             return ["..", "DD"]
         case .dream:
             return [".D", "D.", ".D", "D."]
-        case .wink:
+        case .wave where pulse(center: 0.62, width: 0.08) > 0.7:
             return ["DD"]
         default:
             return ["DD", "DD", "DD", "DD", "DD"]
@@ -524,20 +642,24 @@ private struct MascotPose {
     }
 
     var eyeLookX: CGFloat {
-        switch routine {
-        case .lookAround, .peek:
-            return CGFloat(sin(beat * 0.18)) * 2
+        switch gesture {
+        case .curious:
+            return CGFloat(weightShift * 2.0)
+        case .admire, .wave:
+            return 1
         default:
             return 0
         }
     }
 
     var eyeY: CGFloat {
-        switch routine {
+        switch gesture {
         case .sleep:
             return 5
         case .stretch:
             return -2
+        case .bounce:
+            return CGFloat(-pulse(center: 0.44, width: 0.20) * 1.5)
         default:
             return 0
         }
@@ -545,40 +667,25 @@ private struct MascotPose {
 
     var accessory: Accessory {
         switch routine {
-        case .sparkle, .clap: return .sparkle
-        case .sunSalute: return .sun
-        case .sleep: return .sleep
-        case .dream: return .moon
-        case .orbit: return .orbit
-        case .rainDance: return .rain
-        case .cheer, .twirl: return .sparkle
-        default: return .none
+        case .sparkle, .clap, .cheer, .twirl:
+            return .sparkle
+        case .sunSalute:
+            return .sun
+        case .sleep:
+            return .sleep
+        case .dream:
+            return .moon
+        case .orbit, .starToss:
+            return .orbit
+        case .rainDance:
+            return .rain
+        default:
+            return .none
         }
     }
 
     var leftArmRows: [String] {
-        switch routine {
-        case .cheer:
-            return [
-                "....DD.",
-                "...DD..",
-                "..DD...",
-                ".DD....",
-                "DD.....",
-                "DD.....",
-                ".DD....",
-                "..DD..."
-            ]
-        case .clap:
-            return [
-                ".....DD",
-                "....DDD",
-                "...DD.",
-                "..DD..",
-                ".DD...",
-                ".DD...",
-                "..DD.."
-            ]
+        switch gesture {
         case .stretch:
             return [
                 "....DD.",
@@ -589,7 +696,25 @@ private struct MascotPose {
                 ".DD....",
                 "..DD..."
             ]
-        case .peek:
+        case .dance, .rainShuffle:
+            return [
+                "....DD",
+                "...DDD",
+                "..DD..",
+                ".DDD..",
+                "DD.D..",
+                ".DDD..",
+                "..DD.."
+            ]
+        case .sleep:
+            return [
+                "...DD",
+                "..DDD",
+                ".DD..",
+                ".DD..",
+                "..DD."
+            ]
+        case .curious:
             return [
                 "....DD",
                 "...DDD",
@@ -598,15 +723,14 @@ private struct MascotPose {
                 ".DD...",
                 "..DD.."
             ]
-        case .twirl, .dance:
+        case .bounce:
             return [
-                "....DD",
-                "...DD.",
-                "..DD..",
-                ".DDD..",
-                "DD.D..",
-                ".DDD..",
-                "..DD.."
+                "...DD",
+                "..DDD",
+                ".DD..",
+                "DDD..",
+                "DD...",
+                ".DD.."
             ]
         default:
             return [
@@ -622,37 +746,24 @@ private struct MascotPose {
     }
 
     var rightArmRows: [String] {
-        switch routine {
-        case .cheer:
+        switch gesture {
+        case .wave, .admire:
             return [
-                ".DD....",
-                "..DD...",
-                "...DD..",
-                "....DD.",
-                ".....DD",
-                ".....DD",
-                "....DD.",
-                "...DD.."
-            ]
-        case .wave, .starToss:
-            return [
-                "DD....",
-                "DDD...",
-                "..DD..",
-                "...DD.",
-                "....DD",
-                "...DD.",
-                "..DD..",
-                ".DD..."
-            ]
-        case .clap:
-            return [
-                "DD....",
-                "DDD...",
                 ".DD...",
                 "..DD..",
                 "...DD.",
-                "...DD.",
+                "....DD",
+                "....DD",
+                "...DDD",
+                ".DD..."
+            ]
+        case .dance, .rainShuffle:
+            return [
+                "DD....",
+                "..DD..",
+                "..DDD.",
+                "..D.DD",
+                "..DDD.",
                 "..DD.."
             ]
         case .stretch:
@@ -665,15 +776,22 @@ private struct MascotPose {
                 "....DD",
                 "...DD."
             ]
-        case .twirl, .dance:
+        case .sleep:
             return [
-                "DD....",
-                ".DD...",
-                "..DD..",
-                "..DDD.",
-                "..D.DD",
-                "..DDD.",
-                "..DD.."
+                "DD...",
+                "DDD..",
+                "..DD.",
+                "..DD.",
+                ".DD.."
+            ]
+        case .bounce:
+            return [
+                "DD...",
+                "DDD..",
+                "..DD.",
+                "..DDD",
+                "...DD",
+                "..DD."
             ]
         default:
             return [
@@ -689,18 +807,17 @@ private struct MascotPose {
     }
 
     var leftLegRows: [String] {
-        switch routine {
-        case .moonWalk:
+        switch gesture {
+        case .step, .rainShuffle:
             return [
                 ".DD.",
                 ".DD.",
                 "DD..",
                 "DD..",
                 "DDD.",
-                ".DDD",
-                "..DD"
+                ".DDD"
             ]
-        case .dance, .march:
+        case .dance:
             return [
                 ".DD.",
                 ".DD.",
@@ -708,6 +825,13 @@ private struct MascotPose {
                 "..DD",
                 ".DDD",
                 "DDD."
+            ]
+        case .bounce:
+            return [
+                ".DD.",
+                "DDD.",
+                "DD..",
+                "DDDD"
             ]
         case .sleep:
             return [
@@ -729,26 +853,17 @@ private struct MascotPose {
     }
 
     var rightLegRows: [String] {
-        switch routine {
-        case .kick:
-            return [
-                ".DD...",
-                ".DDD..",
-                "..DDD.",
-                "...DDD",
-                "...DDD"
-            ]
-        case .moonWalk:
+        switch gesture {
+        case .step, .rainShuffle:
             return [
                 ".DD.",
                 ".DD.",
                 "..DD",
                 "..DD",
                 ".DDD",
-                "DDD.",
-                "DD.."
+                "DDD."
             ]
-        case .dance, .march:
+        case .dance, .playfulStep:
             return [
                 ".DD.",
                 ".DD.",
@@ -756,6 +871,13 @@ private struct MascotPose {
                 "DD..",
                 "DDD.",
                 ".DDD"
+            ]
+        case .bounce:
+            return [
+                ".DD.",
+                ".DDD",
+                "..DD",
+                "DDDD"
             ]
         case .sleep:
             return [
@@ -788,7 +910,7 @@ private struct MascotPose {
         switch mood {
         case .night, .lateNight: return 7
         case .dawn, .evening: return 4
-        default: return routine == .dance || routine == .sparkle || routine == .rainDance || routine == .cheer ? 5 : 2
+        default: return gesture == .dance || gesture == .rainShuffle || routine == .sparkle || routine == .cheer ? 5 : 2
         }
     }
 
@@ -811,6 +933,22 @@ private struct MascotPose {
         let y = 8 + baseY + CGFloat(sin(t * 0.45 + seed)) * 4
         return CGPoint(x: x, y: y)
     }
+}
+
+private enum Gesture {
+    case settle
+    case curious
+    case wave
+    case bounce
+    case stretch
+    case step
+    case admire
+    case dance
+    case sway
+    case rainShuffle
+    case playfulStep
+    case sleep
+    case dream
 }
 
 private enum Routine {
@@ -854,19 +992,19 @@ private extension TimeMood {
     var routines: [Routine] {
         switch self {
         case .dawn:
-            return [.sleep, .stretch, .sunSalute, .breathe, .wave, .lookAround, .sparkle, .hop, .wink, .sway, .peek, .float]
+            return [.sleep, .dream, .stretch, .sunSalute, .breathe, .lookAround, .wave, .sparkle, .sway, .peek, .float, .wink]
         case .morning:
-            return [.stretch, .wave, .hop, .breathe, .starToss, .lookAround, .dance, .sparkle, .march, .clap, .orbit, .wink, .kick, .cheer]
+            return [.stretch, .wave, .breathe, .lookAround, .hop, .starToss, .sparkle, .march, .clap, .sway, .wink, .cheer, .orbit]
         case .noon:
-            return [.hop, .dance, .starToss, .wave, .sparkle, .breathe, .lookAround, .march, .clap, .shake, .orbit, .rainDance, .kick, .cheer, .twirl]
+            return [.breathe, .hop, .dance, .wave, .starToss, .lookAround, .march, .clap, .sparkle, .rainDance, .cheer, .orbit, .sway]
         case .afternoon:
-            return [.breathe, .lookAround, .wave, .starToss, .stretch, .dance, .sparkle, .hop, .sway, .march, .peek, .wink, .moonWalk, .kick]
+            return [.breathe, .lookAround, .wave, .starToss, .stretch, .dance, .sparkle, .hop, .sway, .march, .peek, .wink, .float]
         case .evening:
-            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .starToss, .dance, .sway, .clap, .orbit, .dream, .twirl, .moonWalk]
+            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .starToss, .sway, .clap, .orbit, .dream, .float, .wink]
         case .night:
-            return [.breathe, .sleep, .dream, .lookAround, .wave, .sparkle, .sleep, .dream, .sway, .wink, .float]
+            return [.breathe, .sleep, .dream, .lookAround, .wave, .sparkle, .sleep, .dream, .sway, .wink, .float, .orbit]
         case .lateNight:
-            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle, .sway, .float]
+            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle, .sway, .float, .wink]
         }
     }
 }
