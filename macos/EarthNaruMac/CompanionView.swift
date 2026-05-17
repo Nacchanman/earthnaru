@@ -17,7 +17,7 @@ struct CompanionView: View {
                     .scaleEffect(0.58)
                     .frame(width: 80, height: 92)
 
-                PixelClockView(time: Self.timeFormatter.string(from: context.date), color: mood.textColor)
+                PixelClockView(time: Self.timeFormatter.string(from: context.date), color: .white)
             }
             .padding(.top, 5)
             .padding(.horizontal, 5)
