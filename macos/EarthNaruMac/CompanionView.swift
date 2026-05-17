@@ -12,16 +12,17 @@ struct CompanionView: View {
         TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
             let mood = TimeMood(date: context.date)
 
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 MascotView(date: context.date, mood: mood)
-                    .frame(width: 138, height: 156)
+                    .scaleEffect(0.74)
+                    .frame(width: 102, height: 116)
 
                 PixelClockView(time: Self.timeFormatter.string(from: context.date), color: mood.textColor)
             }
-            .padding(.top, 10)
-            .padding(.horizontal, 10)
-            .padding(.bottom, 9)
-            .frame(width: 172, height: 214)
+            .padding(.top, 7)
+            .padding(.horizontal, 7)
+            .padding(.bottom, 6)
+            .frame(width: 132, height: 166)
             .background(mood.background)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
@@ -36,15 +37,15 @@ private struct PixelClockView: View {
     let time: String
     let color: Color
 
-    private let pixel: CGFloat = 4
+    private let pixel: CGFloat = 3
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             ForEach(Array(time.enumerated()), id: \.offset) { _, character in
                 PixelGrid(rows: rows(for: character), pixelSize: pixel, color: color)
             }
         }
-        .frame(height: 28)
+        .frame(height: 20)
         .accessibilityLabel(time)
     }
 
