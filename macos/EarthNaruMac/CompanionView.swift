@@ -14,19 +14,19 @@ struct CompanionView: View {
 
             VStack(spacing: 4) {
                 MascotView(date: context.date, mood: mood)
-                    .scaleEffect(0.74)
-                    .frame(width: 102, height: 116)
+                    .scaleEffect(0.58)
+                    .frame(width: 80, height: 92)
 
                 PixelClockView(time: Self.timeFormatter.string(from: context.date), color: mood.textColor)
             }
-            .padding(.top, 7)
-            .padding(.horizontal, 7)
-            .padding(.bottom, 6)
-            .frame(width: 132, height: 166)
+            .padding(.top, 5)
+            .padding(.horizontal, 5)
+            .padding(.bottom, 5)
+            .frame(width: 104, height: 132)
             .background(mood.background)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .stroke(.white.opacity(mood.borderOpacity), lineWidth: 1)
             )
         }
@@ -37,7 +37,7 @@ private struct PixelClockView: View {
     let time: String
     let color: Color
 
-    private let pixel: CGFloat = 3
+    private let pixel: CGFloat = 2.5
 
     var body: some View {
         HStack(spacing: 3) {
@@ -45,7 +45,7 @@ private struct PixelClockView: View {
                 PixelGrid(rows: rows(for: character), pixelSize: pixel, color: color)
             }
         }
-        .frame(height: 20)
+        .frame(height: 15)
         .accessibilityLabel(time)
     }
 
@@ -140,8 +140,8 @@ enum TimeMood {
 
     var borderOpacity: Double {
         switch self {
-        case .night, .lateNight: return 0.16
-        default: return 0.36
+        case .night, .lateNight: return 0.08
+        default: return 0.14
         }
     }
 
@@ -153,38 +153,38 @@ enum TimeMood {
         switch self {
         case .dawn:
             return [
-                Color(red: 0.98, green: 0.76, blue: 0.62).opacity(0.92),
-                Color(red: 0.82, green: 0.88, blue: 0.98).opacity(0.92)
+                Color(red: 0.98, green: 0.76, blue: 0.62).opacity(0.18),
+                Color(red: 0.82, green: 0.88, blue: 0.98).opacity(0.16)
             ]
         case .morning:
             return [
-                Color(red: 0.76, green: 0.91, blue: 0.98).opacity(0.93),
-                Color(red: 0.89, green: 0.96, blue: 0.78).opacity(0.93)
+                Color(red: 0.76, green: 0.91, blue: 0.98).opacity(0.17),
+                Color(red: 0.89, green: 0.96, blue: 0.78).opacity(0.15)
             ]
         case .noon:
             return [
-                Color(red: 0.62, green: 0.86, blue: 1.00).opacity(0.93),
-                Color(red: 0.98, green: 0.92, blue: 0.62).opacity(0.93)
+                Color(red: 0.62, green: 0.86, blue: 1.00).opacity(0.17),
+                Color(red: 0.98, green: 0.92, blue: 0.62).opacity(0.15)
             ]
         case .afternoon:
             return [
-                Color(red: 0.80, green: 0.91, blue: 1.00).opacity(0.93),
-                Color(red: 0.74, green: 0.93, blue: 0.83).opacity(0.93)
+                Color(red: 0.80, green: 0.91, blue: 1.00).opacity(0.17),
+                Color(red: 0.74, green: 0.93, blue: 0.83).opacity(0.15)
             ]
         case .evening:
             return [
-                Color(red: 0.96, green: 0.58, blue: 0.47).opacity(0.92),
-                Color(red: 0.45, green: 0.46, blue: 0.84).opacity(0.92)
+                Color(red: 0.96, green: 0.58, blue: 0.47).opacity(0.18),
+                Color(red: 0.45, green: 0.46, blue: 0.84).opacity(0.16)
             ]
         case .night:
             return [
-                Color(red: 0.09, green: 0.12, blue: 0.27).opacity(0.94),
-                Color(red: 0.16, green: 0.24, blue: 0.44).opacity(0.94)
+                Color(red: 0.09, green: 0.12, blue: 0.27).opacity(0.20),
+                Color(red: 0.16, green: 0.24, blue: 0.44).opacity(0.18)
             ]
         case .lateNight:
             return [
-                Color(red: 0.04, green: 0.07, blue: 0.17).opacity(0.95),
-                Color(red: 0.13, green: 0.16, blue: 0.34).opacity(0.95)
+                Color(red: 0.04, green: 0.07, blue: 0.17).opacity(0.21),
+                Color(red: 0.13, green: 0.16, blue: 0.34).opacity(0.18)
             ]
         }
     }
