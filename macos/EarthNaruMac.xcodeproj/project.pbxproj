@@ -11,8 +11,6 @@
 		A10000000000000000000002 /* CompanionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* CompanionView.swift */; };
 		A10000000000000000000003 /* CompanionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* CompanionWindowController.swift */; };
 		A10000000000000000000004 /* EarthNaruMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* EarthNaruMacApp.swift */; };
-		A10000000000000000000005 /* GameModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* GameModel.swift */; };
-		A10000000000000000000006 /* KeyboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* KeyboardMonitor.swift */; };
 		A10000000000000000000007 /* MascotView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* MascotView.swift */; };
 		A10000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -23,8 +21,6 @@
 		A10000000000000000000012 /* CompanionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionView.swift; sourceTree = "<group>"; };
 		A10000000000000000000013 /* CompanionWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionWindowController.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* EarthNaruMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthNaruMacApp.swift; sourceTree = "<group>"; };
-		A10000000000000000000015 /* GameModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModel.swift; sourceTree = "<group>"; };
-		A10000000000000000000016 /* KeyboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardMonitor.swift; sourceTree = "<group>"; };
 		A10000000000000000000017 /* MascotView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MascotView.swift; sourceTree = "<group>"; };
 		A10000000000000000000018 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -56,8 +52,6 @@
 				A10000000000000000000012 /* CompanionView.swift */,
 				A10000000000000000000013 /* CompanionWindowController.swift */,
 				A10000000000000000000014 /* EarthNaruMacApp.swift */,
-				A10000000000000000000015 /* GameModel.swift */,
-				A10000000000000000000016 /* KeyboardMonitor.swift */,
 				A10000000000000000000017 /* MascotView.swift */,
 			);
 			path = EarthNaruMac;
@@ -76,7 +70,7 @@
 /* Begin PBXNativeTarget section */
 		A10000000000000000000040 /* EarthNaruMac */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A10000000000000000000060 /* Build configuration list for PBXNativeTarget \"EarthNaruMac\" */;
+			buildConfigurationList = A10000000000000000000060 /* Build configuration list for PBXNativeTarget "EarthNaruMac" */;
 			buildPhases = (
 				A10000000000000000000021 /* Sources */,
 				A10000000000000000000020 /* Frameworks */,
@@ -106,7 +100,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A10000000000000000000051 /* Build configuration list for PBXProject \"EarthNaruMac\" */;
+			buildConfigurationList = A10000000000000000000051 /* Build configuration list for PBXProject "EarthNaruMac" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -144,8 +138,6 @@
 				A10000000000000000000002 /* CompanionView.swift in Sources */,
 				A10000000000000000000003 /* CompanionWindowController.swift in Sources */,
 				A10000000000000000000004 /* EarthNaruMacApp.swift in Sources */,
-				A10000000000000000000005 /* GameModel.swift in Sources */,
-				A10000000000000000000006 /* KeyboardMonitor.swift in Sources */,
 				A10000000000000000000007 /* MascotView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -309,7 +301,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10000000000000000000051 /* Build configuration list for PBXProject \"EarthNaruMac\" */ = {
+		A10000000000000000000051 /* Build configuration list for PBXProject "EarthNaruMac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10000000000000000000052 /* Debug */,
@@ -318,7 +310,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A10000000000000000000060 /* Build configuration list for PBXNativeTarget \"EarthNaruMac\" */ = {
+		A10000000000000000000060 /* Build configuration list for PBXNativeTarget "EarthNaruMac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10000000000000000000061 /* Debug */,
