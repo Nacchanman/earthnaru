@@ -24,14 +24,14 @@ struct MascotView: View {
 
     private func characterGroup(pose: MascotPose) -> some View {
         ZStack(alignment: .topLeading) {
-            pixelLayer(rows: pose.leftLegRows, origin: CGPoint(x: 51 + pose.leftFootX, y: 103 + pose.leftFootY))
+            pixelLayer(rows: pose.leftLegRows, origin: CGPoint(x: 54 + pose.leftFootX, y: 101 + pose.leftFootY))
                 .rotationEffect(.degrees(pose.leftFootAngle), anchor: .top)
-            pixelLayer(rows: pose.rightLegRows, origin: CGPoint(x: 78 + pose.rightFootX, y: 103 + pose.rightFootY))
+            pixelLayer(rows: pose.rightLegRows, origin: CGPoint(x: 75 + pose.rightFootX, y: 101 + pose.rightFootY))
                 .rotationEffect(.degrees(pose.rightFootAngle), anchor: .top)
 
-            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 7 + pose.leftArmX, y: 74 + pose.leftArmY))
+            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 14 + pose.leftArmX, y: 72 + pose.leftArmY))
                 .rotationEffect(.degrees(pose.leftArmAngle), anchor: .trailing)
-            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 97 + pose.rightArmX, y: 56 + pose.rightArmY))
+            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 92 + pose.rightArmX, y: 56 + pose.rightArmY))
                 .rotationEffect(.degrees(pose.rightArmAngle), anchor: .leading)
 
             pixelLayer(rows: earthRows, origin: CGPoint(x: 23, y: 34))
@@ -391,9 +391,9 @@ private struct MascotPose {
     var leftArmX: CGFloat {
         switch gesture {
         case .stretch:
-            return -2
+            return -1
         case .dance:
-            return CGFloat(sin(phase * Double.pi * 4.0)) * 1.5
+            return CGFloat(-weightShift * 1.2)
         case .sleep:
             return 2
         default:
@@ -404,24 +404,24 @@ private struct MascotPose {
     var leftArmY: CGFloat {
         switch gesture {
         case .stretch:
-            return CGFloat(-8 * wave(start: 0.12, end: 0.44) + 7 * wave(start: 0.72, end: 0.96))
+            return CGFloat(-5 * wave(start: 0.12, end: 0.44) + 4 * wave(start: 0.72, end: 0.96))
         case .dance:
-            return CGFloat(sin(phase * Double.pi * 4.0 + 0.8) * 3.0)
+            return CGFloat(calmBreath + sin(phase * Double.pi * 4.0 + 0.8) * 1.4)
         case .sleep:
-            return 5
+            return 3
         case .rainShuffle:
-            return CGFloat(1 + sin(phase * Double.pi * 4.0) * 2)
+            return CGFloat(1 + sin(phase * Double.pi * 4.0) * 1.2)
         default:
-            return CGFloat(calmBreath * 1.4)
+            return CGFloat(calmBreath * 0.9)
         }
     }
 
     var rightArmX: CGFloat {
         switch gesture {
         case .wave, .admire:
-            return 2
+            return 1
         case .dance:
-            return CGFloat(cos(phase * Double.pi * 4.0)) * 1.5
+            return CGFloat(-weightShift * 1.1)
         case .sleep:
             return -2
         default:
@@ -432,72 +432,72 @@ private struct MascotPose {
     var rightArmY: CGFloat {
         switch gesture {
         case .wave:
-            return CGFloat(-7 + sin(phase * Double.pi * 5.0) * 2.5)
+            return CGFloat(-4 + sin(phase * Double.pi * 5.0) * 1.6)
         case .admire:
-            return CGFloat(-8 + pulse(center: 0.42, width: 0.30) * -3)
+            return CGFloat(-5 + pulse(center: 0.42, width: 0.30) * -2)
         case .stretch:
-            return CGFloat(-10 * wave(start: 0.12, end: 0.44) + 8 * wave(start: 0.72, end: 0.96))
+            return CGFloat(-6 * wave(start: 0.12, end: 0.44) + 5 * wave(start: 0.72, end: 0.96))
         case .dance:
-            return CGFloat(cos(phase * Double.pi * 4.0 + 0.6) * 3.0)
+            return CGFloat(calmBreath + cos(phase * Double.pi * 4.0 + 0.6) * 1.4)
         case .sleep:
-            return 4
+            return 3
         case .rainShuffle:
-            return CGFloat(1 + cos(phase * Double.pi * 4.0) * 2)
+            return CGFloat(1 + cos(phase * Double.pi * 4.0) * 1.2)
         default:
-            return CGFloat(calmBreath * 1.2)
+            return CGFloat(calmBreath * 0.9)
         }
     }
 
     var leftArmAngle: Double {
         switch gesture {
         case .stretch:
-            return -8 - wave(start: 0.12, end: 0.44) * 16 + wave(start: 0.72, end: 0.96) * 15
+            return -4 - wave(start: 0.12, end: 0.44) * 7 + wave(start: 0.72, end: 0.96) * 7
         case .curious:
-            return -6 + weightShift * -5
+            return -3 + weightShift * -3
         case .dance:
-            return -10 + sin(phase * Double.pi * 4.0 + 0.4) * 12
+            return -4 + sin(phase * Double.pi * 4.0 + 0.4) * 5
         case .rainShuffle:
-            return -4 + sin(phase * Double.pi * 4.0) * 8
+            return -2 + sin(phase * Double.pi * 4.0) * 4
         case .sleep:
-            return 12
+            return 6
         case .dream:
-            return sin(beat * 0.07) * 8
+            return sin(beat * 0.07) * 4
         default:
-            return calmBreath * 5
+            return calmBreath * 2.5
         }
     }
 
     var rightArmAngle: Double {
         switch gesture {
         case .wave:
-            return -22 + sin(phase * Double.pi * 5.0) * 12
+            return -12 + sin(phase * Double.pi * 5.0) * 7
         case .admire:
-            return -24 + pulse(center: 0.42, width: 0.30) * -8 + sin(beat * 0.10) * 3
+            return -11 + pulse(center: 0.42, width: 0.30) * -5 + sin(beat * 0.10) * 2
         case .stretch:
-            return -10 - wave(start: 0.12, end: 0.44) * 18 + wave(start: 0.72, end: 0.96) * 17
+            return -5 - wave(start: 0.12, end: 0.44) * 8 + wave(start: 0.72, end: 0.96) * 8
         case .dance:
-            return 10 + cos(phase * Double.pi * 4.0 + 0.4) * 12
+            return 4 + cos(phase * Double.pi * 4.0 + 0.4) * 5
         case .rainShuffle:
-            return 4 + cos(phase * Double.pi * 4.0) * 8
+            return 2 + cos(phase * Double.pi * 4.0) * 4
         case .sleep:
-            return -10
+            return -6
         case .dream:
-            return sin(beat * 0.07 + 1.2) * 8
+            return sin(beat * 0.07 + 1.2) * 4
         default:
-            return calmBreath * 5
+            return calmBreath * 2.5
         }
     }
 
     var leftFootX: CGFloat {
         switch gesture {
         case .step, .rainShuffle:
-            return CGFloat(min(0, sin(phase * Double.pi * 2.0)) * 3.0)
+            return CGFloat(min(0, sin(phase * Double.pi * 2.0)) * 1.6)
         case .playfulStep:
-            return CGFloat(-pulse(center: 0.36, width: 0.18) * 3.0)
+            return CGFloat(-pulse(center: 0.36, width: 0.18) * 1.5)
         case .dance:
-            return CGFloat(sin(phase * Double.pi * 4.0) * 2.2)
+            return CGFloat(sin(phase * Double.pi * 4.0) * 1.2)
         case .sleep:
-            return 2
+            return 1
         default:
             return 0
         }
@@ -506,13 +506,13 @@ private struct MascotPose {
     var rightFootX: CGFloat {
         switch gesture {
         case .step, .rainShuffle:
-            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * 3.0)
+            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * 1.6)
         case .playfulStep:
-            return CGFloat(pulse(center: 0.42, width: 0.22) * 4.0)
+            return CGFloat(pulse(center: 0.42, width: 0.22) * 2.0)
         case .dance:
-            return CGFloat(cos(phase * Double.pi * 4.0) * 2.2)
+            return CGFloat(cos(phase * Double.pi * 4.0) * 1.2)
         case .sleep:
-            return -2
+            return -1
         default:
             return 0
         }
@@ -521,13 +521,13 @@ private struct MascotPose {
     var leftFootY: CGFloat {
         switch gesture {
         case .bounce:
-            return CGFloat(-pulse(center: 0.44, width: 0.20) * 2.0)
+            return CGFloat(-pulse(center: 0.44, width: 0.20) * 1.2)
         case .step:
-            return CGFloat(max(0, -sin(phase * Double.pi * 2.0)) * -3.0)
+            return CGFloat(max(0, -sin(phase * Double.pi * 2.0)) * -1.8)
         case .rainShuffle:
-            return CGFloat(max(0, -sin(phase * Double.pi * 2.0)) * -1.5)
+            return CGFloat(max(0, -sin(phase * Double.pi * 2.0)) * -1.0)
         case .dance:
-            return CGFloat(max(0, sin(phase * Double.pi * 4.0)) * -2.5)
+            return CGFloat(max(0, sin(phase * Double.pi * 4.0)) * -1.4)
         case .sleep:
             return 1
         default:
@@ -540,13 +540,13 @@ private struct MascotPose {
         case .bounce:
             return leftFootY
         case .step:
-            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * -3.0)
+            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * -1.8)
         case .rainShuffle:
-            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * -1.5)
+            return CGFloat(max(0, sin(phase * Double.pi * 2.0)) * -1.0)
         case .dance:
-            return CGFloat(max(0, -sin(phase * Double.pi * 4.0)) * -2.5)
+            return CGFloat(max(0, -sin(phase * Double.pi * 4.0)) * -1.4)
         case .playfulStep:
-            return CGFloat(-pulse(center: 0.42, width: 0.22) * 3.0)
+            return CGFloat(-pulse(center: 0.42, width: 0.22) * 1.6)
         case .sleep:
             return 1
         default:
@@ -557,9 +557,9 @@ private struct MascotPose {
     var leftFootAngle: Double {
         switch gesture {
         case .step, .rainShuffle, .dance:
-            return min(0, sin(phase * Double.pi * 2.0)) * 6
+            return min(0, sin(phase * Double.pi * 2.0)) * 3
         case .sleep:
-            return -6
+            return -3
         default:
             return 0
         }
@@ -568,11 +568,11 @@ private struct MascotPose {
     var rightFootAngle: Double {
         switch gesture {
         case .step, .rainShuffle, .dance:
-            return max(0, sin(phase * Double.pi * 2.0)) * -6
+            return max(0, sin(phase * Double.pi * 2.0)) * -3
         case .playfulStep:
-            return -pulse(center: 0.42, width: 0.22) * 10
+            return -pulse(center: 0.42, width: 0.22) * 5
         case .sleep:
-            return 6
+            return 3
         default:
             return 0
         }
