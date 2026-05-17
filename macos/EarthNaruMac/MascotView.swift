@@ -24,14 +24,14 @@ struct MascotView: View {
 
     private func characterGroup(pose: MascotPose) -> some View {
         ZStack(alignment: .topLeading) {
-            pixelLayer(rows: legRows(left: true), origin: CGPoint(x: 50 + pose.leftFootX, y: 121 + pose.leftFootY))
+            pixelLayer(rows: pose.leftLegRows, origin: CGPoint(x: 51 + pose.leftFootX, y: 103 + pose.leftFootY))
                 .rotationEffect(.degrees(pose.leftFootAngle), anchor: .top)
-            pixelLayer(rows: legRows(left: false), origin: CGPoint(x: 78 + pose.rightFootX, y: 121 + pose.rightFootY))
+            pixelLayer(rows: pose.rightLegRows, origin: CGPoint(x: 78 + pose.rightFootX, y: 103 + pose.rightFootY))
                 .rotationEffect(.degrees(pose.rightFootAngle), anchor: .top)
 
-            pixelLayer(rows: leftArmRows, origin: CGPoint(x: 1 + pose.leftArmX, y: 76 + pose.leftArmY))
+            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 7 + pose.leftArmX, y: 74 + pose.leftArmY))
                 .rotationEffect(.degrees(pose.leftArmAngle), anchor: .trailing)
-            pixelLayer(rows: rightArmRows, origin: CGPoint(x: 104 + pose.rightArmX, y: 57 + pose.rightArmY))
+            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 97 + pose.rightArmX, y: 56 + pose.rightArmY))
                 .rotationEffect(.degrees(pose.rightArmAngle), anchor: .leading)
 
             pixelLayer(rows: earthRows, origin: CGPoint(x: 23, y: 34))
@@ -116,32 +116,6 @@ struct MascotView: View {
         ]
     }
 
-    private var leftArmRows: [String] {
-        [
-            ".....DD",
-            "....DD.",
-            "...DD..",
-            "..DD...",
-            ".DD....",
-            "DD.....",
-            "DDD....",
-            ".DDD..."
-        ]
-    }
-
-    private var rightArmRows: [String] {
-        [
-            "....DD.",
-            "....DD.",
-            "...DD..",
-            "...DD..",
-            "..DD...",
-            "..DD...",
-            "DDD....",
-            "DD....."
-        ]
-    }
-
     private var starRows: [String] {
         [
             "...R...",
@@ -208,25 +182,6 @@ struct MascotView: View {
         ]
     }
 
-    private func legRows(left: Bool) -> [String] {
-        left
-        ? [
-            "..DD",
-            "..DD",
-            ".DD.",
-            ".DD.",
-            "DDDD",
-            "DDDD"
-        ]
-        : [
-            "DD..",
-            "DD..",
-            ".DD.",
-            ".DD.",
-            "DDDD",
-            "DDDD"
-        ]
-    }
 }
 
 private struct MascotPose {
@@ -262,6 +217,12 @@ private struct MascotPose {
             return CGFloat(sin(beat * 0.14)) * 2
         case .shake:
             return CGFloat(sin(beat * 1.50)) * 2
+        case .twirl:
+            return CGFloat(sin(beat * 0.70)) * 4
+        case .moonWalk:
+            return CGFloat(sin(beat * 0.38)) * 6
+        case .float:
+            return CGFloat(sin(beat * 0.10)) * 3
         default:
             return CGFloat(sin(beat * 0.12)) * 1.2
         }
@@ -277,6 +238,10 @@ private struct MascotPose {
             return CGFloat(sin(beat * 0.20)) * -5
         case .peek:
             return CGFloat(sin(beat * 0.18)) * 3 + 2
+        case .cheer:
+            return -abs(CGFloat(sin(beat * 0.55))) * 7
+        case .float:
+            return CGFloat(sin(beat * 0.12)) * 5 - 4
         case .sleep, .dream:
             return CGFloat(sin(beat * 0.10)) * 2
         default:
@@ -296,6 +261,10 @@ private struct MascotPose {
             return sin(beat * 0.08) * 2
         case .shake:
             return sin(beat * 1.50) * 3
+        case .twirl:
+            return sin(beat * 0.70) * 10
+        case .moonWalk:
+            return sin(beat * 0.32) * -5
         default:
             return sin(beat * 0.13) * 1.5
         }
@@ -309,6 +278,8 @@ private struct MascotPose {
             return 0.94
         case .sleep:
             return 1.04
+        case .cheer:
+            return 0.96 + abs(CGFloat(sin(beat * 0.55))) * 0.06
         default:
             return 1.0
         }
@@ -320,6 +291,8 @@ private struct MascotPose {
             return 1.10 + CGFloat(sin(beat * 0.20)) * 0.03
         case .hop:
             return 1.0 - abs(CGFloat(sin(beat * 0.50))) * 0.04
+        case .cheer:
+            return 1.06 - abs(CGFloat(sin(beat * 0.55))) * 0.04
         case .sleep, .dream:
             return 0.98 + CGFloat(sin(beat * 0.10)) * 0.02
         default:
@@ -339,6 +312,10 @@ private struct MascotPose {
             return CGFloat(sin(beat * 0.60)) * 5
         case .peek:
             return -4
+        case .cheer:
+            return -14
+        case .kick:
+            return CGFloat(sin(beat * 0.45)) * 3
         case .sleep:
             return 4
         default:
@@ -350,6 +327,7 @@ private struct MascotPose {
         switch routine {
         case .wave, .starToss: return 2
         case .clap: return -3
+        case .cheer: return 1
         default: return 0
         }
     }
@@ -364,6 +342,10 @@ private struct MascotPose {
             return -12
         case .clap:
             return CGFloat(cos(beat * 0.70)) * 5
+        case .cheer:
+            return -16
+        case .kick:
+            return CGFloat(cos(beat * 0.45)) * 3
         case .sleep:
             return 3
         default:
@@ -381,6 +363,10 @@ private struct MascotPose {
             return -20
         case .peek:
             return -28
+        case .cheer:
+            return -36 + sin(beat * 0.55) * 10
+        case .twirl:
+            return sin(beat * 0.70) * 26
         case .sleep:
             return 10
         default:
@@ -400,6 +386,10 @@ private struct MascotPose {
             return 14 + sin(beat * 0.55) * 14
         case .clap:
             return 18 - sin(beat * 0.70) * 15
+        case .cheer:
+            return 36 - sin(beat * 0.55) * 10
+        case .twirl:
+            return -sin(beat * 0.70) * 26
         default:
             return sin(beat * 0.22) * 8
         }
@@ -407,8 +397,10 @@ private struct MascotPose {
 
     var leftFootX: CGFloat {
         switch routine {
-        case .dance, .march:
+        case .dance, .march, .moonWalk:
             return CGFloat(sin(beat * 0.50)) * 3
+        case .kick:
+            return -3
         default:
             return 0
         }
@@ -416,8 +408,10 @@ private struct MascotPose {
 
     var rightFootX: CGFloat {
         switch routine {
-        case .dance, .march:
+        case .dance, .march, .moonWalk:
             return CGFloat(cos(beat * 0.50)) * 3
+        case .kick:
+            return abs(CGFloat(sin(beat * 0.55))) * 13
         default:
             return 0
         }
@@ -429,6 +423,8 @@ private struct MascotPose {
             return abs(CGFloat(sin(beat * 0.50))) * -3
         case .march:
             return max(0, CGFloat(sin(beat * 0.55))) * -4
+        case .moonWalk:
+            return CGFloat(sin(beat * 0.40)) * 2
         default:
             return 0
         }
@@ -440,17 +436,28 @@ private struct MascotPose {
             return CGFloat(sin(beat * 0.50)) * 3
         case .march:
             return max(0, CGFloat(cos(beat * 0.55))) * -4
+        case .kick:
+            return -abs(CGFloat(sin(beat * 0.55))) * 8
+        case .moonWalk:
+            return CGFloat(cos(beat * 0.40)) * 2
         default:
             return leftFootY
         }
     }
 
     var leftFootAngle: Double {
-        routine == .dance || routine == .march ? sin(beat * 0.50) * 8 : 0
+        routine == .dance || routine == .march || routine == .moonWalk ? sin(beat * 0.50) * 8 : 0
     }
 
     var rightFootAngle: Double {
-        routine == .dance || routine == .march ? cos(beat * 0.50) * 8 : 0
+        switch routine {
+        case .kick:
+            return -28 * abs(sin(beat * 0.55))
+        case .dance, .march, .moonWalk:
+            return cos(beat * 0.50) * 8
+        default:
+            return 0
+        }
     }
 
     var starX: CGFloat {
@@ -544,7 +551,228 @@ private struct MascotPose {
         case .dream: return .moon
         case .orbit: return .orbit
         case .rainDance: return .rain
+        case .cheer, .twirl: return .sparkle
         default: return .none
+        }
+    }
+
+    var leftArmRows: [String] {
+        switch routine {
+        case .cheer:
+            return [
+                "....DD.",
+                "...DD..",
+                "..DD...",
+                ".DD....",
+                "DD.....",
+                "DD.....",
+                ".DD....",
+                "..DD..."
+            ]
+        case .clap:
+            return [
+                ".....DD",
+                "....DDD",
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                ".DD...",
+                "..DD.."
+            ]
+        case .stretch:
+            return [
+                "....DD.",
+                "...DD..",
+                "..DD...",
+                ".DD....",
+                "DD.....",
+                ".DD....",
+                "..DD..."
+            ]
+        case .peek:
+            return [
+                "....DD",
+                "...DDD",
+                "..DD..",
+                ".DD...",
+                ".DD...",
+                "..DD.."
+            ]
+        case .twirl, .dance:
+            return [
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DDD..",
+                "DD.D..",
+                ".DDD..",
+                "..DD.."
+            ]
+        default:
+            return [
+                "....DD",
+                "...DDD",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DD..."
+            ]
+        }
+    }
+
+    var rightArmRows: [String] {
+        switch routine {
+        case .cheer:
+            return [
+                ".DD....",
+                "..DD...",
+                "...DD..",
+                "....DD.",
+                ".....DD",
+                ".....DD",
+                "....DD.",
+                "...DD.."
+            ]
+        case .wave, .starToss:
+            return [
+                "DD....",
+                "DDD...",
+                "..DD..",
+                "...DD.",
+                "....DD",
+                "...DD.",
+                "..DD..",
+                ".DD..."
+            ]
+        case .clap:
+            return [
+                "DD....",
+                "DDD...",
+                ".DD...",
+                "..DD..",
+                "...DD.",
+                "...DD.",
+                "..DD.."
+            ]
+        case .stretch:
+            return [
+                ".DD...",
+                "..DD..",
+                "...DD.",
+                "....DD",
+                ".....DD",
+                "....DD",
+                "...DD."
+            ]
+        case .twirl, .dance:
+            return [
+                "DD....",
+                ".DD...",
+                "..DD..",
+                "..DDD.",
+                "..D.DD",
+                "..DDD.",
+                "..DD.."
+            ]
+        default:
+            return [
+                "DD....",
+                "DDD...",
+                "..DD..",
+                "...DD.",
+                "....DD",
+                "....DD",
+                "...DD."
+            ]
+        }
+    }
+
+    var leftLegRows: [String] {
+        switch routine {
+        case .moonWalk:
+            return [
+                ".DD.",
+                ".DD.",
+                "DD..",
+                "DD..",
+                "DDD.",
+                ".DDD",
+                "..DD"
+            ]
+        case .dance, .march:
+            return [
+                ".DD.",
+                ".DD.",
+                "..DD",
+                "..DD",
+                ".DDD",
+                "DDD."
+            ]
+        case .sleep:
+            return [
+                ".DD.",
+                ".DD.",
+                "DDD.",
+                "DDDD"
+            ]
+        default:
+            return [
+                ".DD.",
+                ".DD.",
+                ".DD.",
+                "DD..",
+                "DDDD",
+                "DDDD"
+            ]
+        }
+    }
+
+    var rightLegRows: [String] {
+        switch routine {
+        case .kick:
+            return [
+                ".DD...",
+                ".DDD..",
+                "..DDD.",
+                "...DDD",
+                "...DDD"
+            ]
+        case .moonWalk:
+            return [
+                ".DD.",
+                ".DD.",
+                "..DD",
+                "..DD",
+                ".DDD",
+                "DDD.",
+                "DD.."
+            ]
+        case .dance, .march:
+            return [
+                ".DD.",
+                ".DD.",
+                "DD..",
+                "DD..",
+                "DDD.",
+                ".DDD"
+            ]
+        case .sleep:
+            return [
+                ".DD.",
+                ".DD.",
+                ".DDD",
+                "DDDD"
+            ]
+        default:
+            return [
+                ".DD.",
+                ".DD.",
+                ".DD.",
+                "..DD",
+                "DDDD",
+                "DDDD"
+            ]
         }
     }
 
@@ -560,7 +788,7 @@ private struct MascotPose {
         switch mood {
         case .night, .lateNight: return 7
         case .dawn, .evening: return 4
-        default: return routine == .dance || routine == .sparkle || routine == .rainDance ? 5 : 2
+        default: return routine == .dance || routine == .sparkle || routine == .rainDance || routine == .cheer ? 5 : 2
         }
     }
 
@@ -605,6 +833,11 @@ private enum Routine {
     case peek
     case shake
     case rainDance
+    case kick
+    case cheer
+    case twirl
+    case moonWalk
+    case float
 }
 
 private enum Accessory {
@@ -621,19 +854,19 @@ private extension TimeMood {
     var routines: [Routine] {
         switch self {
         case .dawn:
-            return [.sleep, .stretch, .sunSalute, .breathe, .wave, .lookAround, .sparkle, .hop, .wink, .sway, .peek]
+            return [.sleep, .stretch, .sunSalute, .breathe, .wave, .lookAround, .sparkle, .hop, .wink, .sway, .peek, .float]
         case .morning:
-            return [.stretch, .wave, .hop, .breathe, .starToss, .lookAround, .dance, .sparkle, .march, .clap, .orbit, .wink]
+            return [.stretch, .wave, .hop, .breathe, .starToss, .lookAround, .dance, .sparkle, .march, .clap, .orbit, .wink, .kick, .cheer]
         case .noon:
-            return [.hop, .dance, .starToss, .wave, .sparkle, .breathe, .lookAround, .march, .clap, .shake, .orbit, .rainDance]
+            return [.hop, .dance, .starToss, .wave, .sparkle, .breathe, .lookAround, .march, .clap, .shake, .orbit, .rainDance, .kick, .cheer, .twirl]
         case .afternoon:
-            return [.breathe, .lookAround, .wave, .starToss, .stretch, .dance, .sparkle, .hop, .sway, .march, .peek, .wink]
+            return [.breathe, .lookAround, .wave, .starToss, .stretch, .dance, .sparkle, .hop, .sway, .march, .peek, .wink, .moonWalk, .kick]
         case .evening:
-            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .starToss, .dance, .sway, .clap, .orbit, .dream]
+            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .starToss, .dance, .sway, .clap, .orbit, .dream, .twirl, .moonWalk]
         case .night:
-            return [.breathe, .sleep, .dream, .lookAround, .wave, .sparkle, .sleep, .dream, .sway, .wink]
+            return [.breathe, .sleep, .dream, .lookAround, .wave, .sparkle, .sleep, .dream, .sway, .wink, .float]
         case .lateNight:
-            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle, .sway]
+            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle, .sway, .float]
         }
     }
 }
