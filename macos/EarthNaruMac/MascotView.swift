@@ -29,9 +29,9 @@ struct MascotView: View {
             pixelLayer(rows: pose.rightLegRows, origin: CGPoint(x: 75 + pose.rightFootX, y: 101 + pose.rightFootY))
                 .rotationEffect(.degrees(pose.rightFootAngle), anchor: .top)
 
-            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 20 + pose.leftArmX, y: 72 + pose.leftArmY))
+            pixelLayer(rows: pose.leftArmRows, origin: CGPoint(x: 3 + pose.leftArmX, y: 64 + pose.leftArmY))
                 .rotationEffect(.degrees(pose.leftArmAngle), anchor: .trailing)
-            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 86 + pose.rightArmX, y: 56 + pose.rightArmY))
+            pixelLayer(rows: pose.rightArmRows, origin: CGPoint(x: 98 + pose.rightArmX, y: 64 + pose.rightArmY))
                 .rotationEffect(.degrees(pose.rightArmAngle), anchor: .leading)
 
             pixelLayer(rows: earthRows, origin: CGPoint(x: 23, y: 34))
@@ -701,11 +701,12 @@ private struct MascotPose {
 
     private var neutralLeftArmRows: [String] {
         [
-            "...DD",
-            "...DD",
-            "..DD.",
-            "..DD.",
-            "..DD."
+            "....DD",
+            "...DDD",
+            "..DD..",
+            ".DD...",
+            "DD....",
+            "DD...."
         ]
     }
 
@@ -749,60 +750,95 @@ private struct MascotPose {
         switch gesture {
         case .stretch:
             return [
-                "...DD",
-                "...DD",
-                "..DD.",
-                "..DD.",
-                "..DD."
+                "...DD.",
+                "..DD..",
+                ".DD...",
+                "DD....",
+                "DD....",
+                ".DD..."
             ]
         case .wave:
-            if phase < 0.5 {
+            switch Int(phase * 5.0) % 5 {
+            case 0:
                 return [
-                    "...DD",
-                    "..DD.",
-                    "..DD.",
+                    "....DD",
+                    "...DD.",
+                    "..DD..",
                     ".DD..",
-                    ".DD.."
+                    "DD...",
+                    "DD..."
                 ]
+            case 1:
+                return [
+                    "...DD.",
+                    "..DD..",
+                    ".DD...",
+                    "DD....",
+                    "DDD...",
+                    "..DD.."
+                ]
+            case 2:
+                return [
+                    "..DD..",
+                    ".DD...",
+                    "DD....",
+                    "DDD...",
+                    "..DD..",
+                    "...DD."
+                ]
+            case 3:
+                return [
+                    "...DD.",
+                    "..DD..",
+                    "DDD...",
+                    "D.D...",
+                    ".DDD..",
+                    "...DD."
+                ]
+            default:
+                return neutralLeftArmRows
             }
-            return neutralLeftArmRows
         case .dance, .rainShuffle:
-            return phase < 0.5
+            return quickStepSign > 0
                 ? [
-                    "...DD",
-                    "...DD",
-                    "..DD.",
-                    ".DD..",
-                    ".DD.."
+                    "....DD",
+                    "...DDD",
+                    "..DD..",
+                    ".DDD..",
+                    "D.D...",
+                    "DDD..."
                 ]
                 : [
-                    "...DD",
-                    "..DD.",
-                    "..DD.",
-                    "..DDD",
-                    "...DD"
+                    "...DD.",
+                    "..DD..",
+                    "DDD...",
+                    "D.D...",
+                    ".DDD..",
+                    "..DD.."
                 ]
         case .sleep:
             return [
                 "...DD",
-                "...DD",
-                "..DD.",
+                "..DDD",
+                ".DD..",
+                ".DD..",
                 "..DD."
             ]
         case .curious:
             return [
-                "...DD",
-                "...DD",
-                "..DD.",
-                "..DD.",
-                "..DD."
+                "...DD.",
+                "..DDD.",
+                ".DD...",
+                ".DDD..",
+                "..DD.."
             ]
         case .bounce:
             return [
                 "...DD",
-                "...DD",
-                "..DD.",
-                "..DD."
+                "..DDD",
+                ".DD..",
+                "DDD..",
+                "DD..."
             ]
         default:
             return neutralLeftArmRows
@@ -899,7 +935,6 @@ private struct MascotPose {
                 "..DD..",
                 "...DD.",
                 "....DD",
-                ".....DD",
                 "....DD",
                 "...DD."
             ]
