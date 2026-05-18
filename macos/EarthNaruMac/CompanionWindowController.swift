@@ -28,7 +28,7 @@ final class CompanionWindowController {
 
     init() {
         let contentView = CompanionView()
-        let hostingView = NSHostingView(rootView: contentView)
+        let hostingView = HoverFadingHostingView(rootView: contentView)
 
         window = NSWindow(
             contentRect: NSRect(origin: .zero, size: windowSize),
@@ -43,6 +43,14 @@ final class CompanionWindowController {
         window.level = .floating
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
         window.isMovableByWindowBackground = true
+
+        hostingView.onHoverChanged = { [weak window] isHovering in
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.12
+                window?.animator().alphaValue = isHovering ? 0.04 : 1.0
+            }
+            window?.hasShadow = !isHovering
+        }
     }
 
     func show() {
@@ -75,5 +83,38 @@ final class CompanionWindowController {
         }
 
         window.setFrameOrigin(origin)
+    }
+}
+
+private final class HoverFadingHostingView<Content: View>: NSHostingView<Content> {
+    var onHoverChanged: ((Bool) -> Void)?
+
+    private var hoverTrackingArea: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        if let hoverTrackingArea {
+            removeTrackingArea(hoverTrackingArea)
+        }
+
+        let options: NSTrackingArea.Options = [
+            .activeAlways,
+            .inVisibleRect,
+            .mouseEnteredAndExited
+        ]
+        let trackingArea = NSTrackingArea(rect: .zero, options: options, owner: self, userInfo: nil)
+        addTrackingArea(trackingArea)
+        hoverTrackingArea = trackingArea
+
+        super.updateTrackingAreas()
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        onHoverChanged?(true)
+        super.mouseEntered(with: event)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        onHoverChanged?(false)
+        super.mouseExited(with: event)
     }
 }
