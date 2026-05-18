@@ -266,31 +266,31 @@ private struct MascotPose {
 
     private var gesture: Gesture {
         switch routine {
-        case .breathe, .sparkle, .stargaze, .proudPose:
+        case .breathe, .sparkle, .stargaze, .proudPose, .pauseLook, .tinySigh, .cloudWatch:
             return .settle
-        case .stretch, .sunSalute, .yawn, .morningRub, .shoulderRoll:
+        case .stretch, .sunSalute, .yawn, .morningRub, .shoulderRoll, .eveningStretch, .wakeReach:
             return .stretch
-        case .wave, .wink, .shyWave, .bigWave, .handSway, .armCircle:
+        case .wave, .wink, .shyWave, .bigWave, .handSway, .armCircle, .doubleWave, .helloPeek:
             return .wave
-        case .hop, .cheer:
+        case .hop, .cheer, .softBounce, .sunHop:
             return .bounce
-        case .dance, .clap, .twirl, .tinyJump:
+        case .dance, .clap, .twirl, .tinyJump, .happyShimmy, .tinyClap, .shoulderDance:
             return .dance
-        case .lookAround, .peek, .nod:
+        case .lookAround, .peek, .nod, .lookUp, .lookDown, .sideNod, .rainPeek:
             return .curious
-        case .starToss, .orbit, .pointStar:
+        case .starToss, .orbit, .pointStar, .starReach, .moonGaze:
             return .admire
-        case .sleep:
+        case .sleep, .sleepTurn:
             return .sleep
-        case .dream, .float:
+        case .dream, .float, .driftLeft, .driftRight:
             return .dream
-        case .march, .moonWalk, .softWalk, .tiptoe, .sideStep, .slowMarch:
+        case .march, .moonWalk, .softWalk, .tiptoe, .sideStep, .slowMarch, .sneakStep, .miniMarch:
             return .step
-        case .sway, .bow, .sleepySway:
+        case .sway, .bow, .sleepySway, .microBow, .slowSway:
             return .sway
         case .rainDance:
             return .rainShuffle
-        case .kick, .shake, .toeTap, .kneeBend, .heelRock, .footShuffle:
+        case .kick, .shake, .toeTap, .kneeBend, .heelRock, .footShuffle, .toeWiggle, .heelClick:
             return .playfulStep
         }
     }
@@ -334,7 +334,20 @@ private struct MascotPose {
         default:
             accent = 0
         }
-        return CGFloat(base + softened(weight + accent))
+        let routineAccent: Double
+        switch routine {
+        case .driftLeft:
+            routineAccent = -2.0 - pulse(center: 0.50, width: 0.36) * 2.0
+        case .driftRight:
+            routineAccent = 2.0 + pulse(center: 0.50, width: 0.36) * 2.0
+        case .sideNod:
+            routineAccent = sin(phase * Double.pi * 2.0) * 1.4
+        case .sneakStep:
+            routineAccent = sin(phase * Double.pi * 2.0) * 0.8
+        default:
+            routineAccent = 0
+        }
+        return CGFloat(base + softened(weight + accent + routineAccent))
     }
 
     var bodyY: CGFloat {
@@ -356,7 +369,18 @@ private struct MascotPose {
         case .dream:
             return CGFloat(-2.5 + sin(beat * 0.07) * 3.5)
         default:
-            return CGFloat(breath)
+            let routineAccent: Double
+            switch routine {
+            case .softBounce:
+                routineAccent = -pulse(center: 0.46, width: 0.28) * 3.0
+            case .tinySigh:
+                routineAccent = pulse(center: 0.62, width: 0.22) * 1.8
+            case .cloudWatch, .lookUp:
+                routineAccent = -pulse(center: 0.50, width: 0.35) * 1.2
+            default:
+                routineAccent = 0
+            }
+            return CGFloat(breath + softened(routineAccent))
         }
     }
 
@@ -379,7 +403,14 @@ private struct MascotPose {
         case .sway:
             return softened(weightShift * 5.0)
         default:
-            return calmBreath * 1.2
+            switch routine {
+            case .microBow:
+                return softened(pulse(center: 0.50, width: 0.34) * 4.0)
+            case .sideNod:
+                return softened(sin(phase * Double.pi * 4.0) * 2.2)
+            default:
+                return calmBreath * 1.2
+            }
         }
     }
 
@@ -663,7 +694,14 @@ private struct MascotPose {
         case .admire, .wave:
             return 1
         default:
-            return 0
+            switch routine {
+            case .driftLeft:
+                return -1
+            case .driftRight:
+                return 1
+            default:
+                return 0
+            }
         }
     }
 
@@ -676,23 +714,30 @@ private struct MascotPose {
         case .bounce:
             return CGFloat(-pulse(center: 0.44, width: 0.20) * 1.5)
         default:
-            return 0
+            switch routine {
+            case .lookUp, .cloudWatch, .moonGaze:
+                return -1
+            case .lookDown, .tinySigh:
+                return 1
+            default:
+                return 0
+            }
         }
     }
 
     var accessory: Accessory {
         switch routine {
-        case .sparkle, .clap, .cheer, .twirl, .tinyJump, .proudPose:
+        case .sparkle, .clap, .cheer, .twirl, .tinyJump, .proudPose, .happyShimmy, .tinyClap:
             return .sparkle
-        case .sunSalute:
+        case .sunSalute, .sunHop:
             return .sun
-        case .sleep:
+        case .sleep, .sleepTurn:
             return .sleep
-        case .dream:
+        case .dream, .moonGaze:
             return .moon
-        case .orbit, .starToss:
+        case .orbit, .starToss, .starReach:
             return .orbit
-        case .rainDance:
+        case .rainDance, .rainPeek:
             return .rain
         default:
             return .none
@@ -1109,19 +1154,35 @@ private enum Gesture {
 
 private enum Routine {
     case breathe
+    case pauseLook
+    case tinySigh
+    case cloudWatch
     case stretch
+    case eveningStretch
+    case wakeReach
     case wave
     case shyWave
     case bigWave
+    case doubleWave
+    case helloPeek
     case handSway
     case armCircle
     case hop
+    case softBounce
+    case sunHop
     case dance
+    case happyShimmy
+    case shoulderDance
     case lookAround
     case nod
+    case sideNod
+    case lookUp
+    case lookDown
     case starToss
     case pointStar
+    case starReach
     case stargaze
+    case moonGaze
     case sparkle
     case sunSalute
     case yawn
@@ -1133,13 +1194,19 @@ private enum Routine {
     case tiptoe
     case sideStep
     case slowMarch
+    case sneakStep
+    case miniMarch
     case clap
+    case tinyClap
     case orbit
     case wink
     case sway
     case bow
+    case microBow
+    case slowSway
     case sleepySway
     case peek
+    case rainPeek
     case shake
     case rainDance
     case kick
@@ -1147,6 +1214,8 @@ private enum Routine {
     case kneeBend
     case heelRock
     case footShuffle
+    case toeWiggle
+    case heelClick
     case cheer
     case twirl
     case tinyJump
@@ -1154,6 +1223,9 @@ private enum Routine {
     case proudPose
     case moonWalk
     case float
+    case driftLeft
+    case driftRight
+    case sleepTurn
 }
 
 private enum Accessory {
@@ -1170,19 +1242,19 @@ private extension TimeMood {
     var routines: [Routine] {
         switch self {
         case .dawn:
-            return [.sleep, .dream, .yawn, .morningRub, .stretch, .sunSalute, .breathe, .lookAround, .shyWave, .sparkle, .softWalk, .sway, .peek, .float, .wink, .nod]
+            return [.sleep, .dream, .sleepTurn, .yawn, .morningRub, .wakeReach, .stretch, .sunSalute, .sunHop, .breathe, .pauseLook, .lookAround, .lookUp, .shyWave, .helloPeek, .sparkle, .softWalk, .sneakStep, .sway, .peek, .float, .driftLeft, .wink, .nod]
         case .morning:
-            return [.stretch, .wave, .bigWave, .breathe, .lookAround, .hop, .starToss, .pointStar, .sparkle, .march, .softWalk, .tiptoe, .clap, .sway, .wink, .cheer, .orbit, .toeTap, .proudPose]
+            return [.stretch, .wakeReach, .wave, .bigWave, .doubleWave, .breathe, .cloudWatch, .lookAround, .hop, .softBounce, .starToss, .pointStar, .starReach, .sparkle, .march, .miniMarch, .softWalk, .tiptoe, .clap, .tinyClap, .sway, .sideNod, .wink, .cheer, .orbit, .toeTap, .toeWiggle, .proudPose]
         case .noon:
-            return [.breathe, .hop, .tinyJump, .dance, .wave, .handSway, .starToss, .lookAround, .march, .sideStep, .slowMarch, .clap, .sparkle, .rainDance, .cheer, .orbit, .sway, .kneeBend, .armCircle]
+            return [.breathe, .pauseLook, .hop, .sunHop, .tinyJump, .dance, .happyShimmy, .shoulderDance, .wave, .handSway, .armCircle, .starToss, .starReach, .lookAround, .lookDown, .march, .sideStep, .slowMarch, .miniMarch, .clap, .tinyClap, .sparkle, .rainDance, .rainPeek, .cheer, .orbit, .sway, .kneeBend, .heelClick, .armCircle]
         case .afternoon:
-            return [.breathe, .lookAround, .wave, .shyWave, .starToss, .stargaze, .stretch, .shoulderRoll, .dance, .sparkle, .hop, .sway, .march, .footShuffle, .peek, .wink, .float, .heelRock]
+            return [.breathe, .tinySigh, .lookAround, .lookUp, .wave, .shyWave, .helloPeek, .starToss, .stargaze, .cloudWatch, .stretch, .shoulderRoll, .dance, .happyShimmy, .sparkle, .hop, .softBounce, .sway, .slowSway, .march, .footShuffle, .toeWiggle, .peek, .wink, .float, .driftRight, .heelRock]
         case .evening:
-            return [.wave, .breathe, .lookAround, .sparkle, .stretch, .bow, .starToss, .pointStar, .sway, .clap, .orbit, .dream, .float, .wink, .softWalk, .handSway]
+            return [.wave, .shyWave, .breathe, .tinySigh, .lookAround, .lookDown, .sparkle, .eveningStretch, .bow, .microBow, .starToss, .pointStar, .moonGaze, .sway, .slowSway, .clap, .tinyClap, .orbit, .dream, .float, .driftLeft, .wink, .softWalk, .handSway]
         case .night:
-            return [.breathe, .sleep, .dream, .lookAround, .shyWave, .sparkle, .sleep, .dream, .sleepySway, .wink, .float, .orbit, .stargaze, .tiptoe]
+            return [.breathe, .pauseLook, .sleep, .dream, .sleepTurn, .lookAround, .lookUp, .shyWave, .sparkle, .sleep, .dream, .sleepySway, .microBow, .wink, .float, .driftRight, .orbit, .stargaze, .moonGaze, .tiptoe, .sneakStep]
         case .lateNight:
-            return [.sleep, .dream, .breathe, .sleep, .dream, .lookAround, .sleep, .sparkle, .sleepySway, .float, .wink, .yawn]
+            return [.sleep, .dream, .sleepTurn, .breathe, .tinySigh, .sleep, .dream, .lookAround, .lookDown, .sleep, .sparkle, .sleepySway, .float, .driftLeft, .wink, .yawn, .moonGaze]
         }
     }
 }
